@@ -16,15 +16,36 @@ interface SwaggerSpec {
   securityDefinitions?: Record<string, unknown>;
 }
 
-function convertSwaggerToOpenApi(swagger: SwaggerSpec): OpenApiSpec {
+function deepRewriteRefs(obj: unknown): unknown {
+  if (obj === null || typeof obj !== 'object') return obj;
+
+  if (Array.isArray(obj)) {
+    return obj.map(deepRewriteRefs);
+  }
+
+  const result: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+    if (k === '$ref' && typeof v === 'string') {
+      result[k] = v.replace('#/definitions/', '#/components/schemas/');
+    } else {
+      result[k] = deepRewriteRefs(v);
+    }
+  }
+  return result;
+}
+
+export function convertSwaggerToOpenApi(swagger: SwaggerSpec): OpenApiSpec {
   const scheme = swagger.schemes?.[0] ?? 'https';
   const host = swagger.host ?? 'localhost';
   const basePath = swagger.basePath ?? '/';
   const baseUrl = `${scheme}://${host}${basePath}`;
 
+  // Convert definitions recursively
+  const convertedSchemas = deepRewriteRefs(swagger.definitions ?? {}) as Record<string, import('@/types/openapi').OpenApiSchema>;
+
   // Convert security definitions
   const securitySchemes: NonNullable<OpenApiSpec['components']> = {
-    schemas: swagger.definitions as NonNullable<OpenApiSpec['components']>['schemas'],
+    schemas: convertedSchemas,
     securitySchemes: {},
   };
 
@@ -94,20 +115,13 @@ function convertSwaggerToOpenApi(swagger: SwaggerSpec): OpenApiSpec {
               requestBody = {
                 description: param.description,
                 required: param.required ?? false,
-                content: { 'application/json': { schema } },
+                content: { 'application/json': { schema: deepRewriteRefs(schema) } },
               };
             }
           } else if (param.in === 'formData') {
             // skip for simplicity
           } else {
-            // Fix $ref in parameter schema
-            if (param.schema && (param.schema as Record<string, unknown>).$ref) {
-              const oldRef = (param.schema as Record<string, unknown>).$ref as string;
-              const newRef = oldRef.replace('#/definitions/', '#/components/schemas/');
-              convertedParams.push({ ...param, schema: { $ref: newRef } });
-            } else {
-              convertedParams.push(param);
-            }
+            convertedParams.push(deepRewriteRefs(param));
           }
         }
 
@@ -119,14 +133,10 @@ function convertSwaggerToOpenApi(swagger: SwaggerSpec): OpenApiSpec {
         for (const [code, resp] of Object.entries((op.responses as Record<string, unknown>) ?? {})) {
           const r = resp as Record<string, unknown>;
           const schema = r.schema as Record<string, unknown> | undefined;
-          let convertedSchema = schema;
-          if (schema?.$ref) {
-            const oldRef = schema.$ref as string;
-            convertedSchema = { $ref: oldRef.replace('#/definitions/', '#/components/schemas/') };
-          }
+          
           responses[code] = {
             description: r.description ?? '',
-            content: convertedSchema ? { 'application/json': { schema: convertedSchema } } : undefined,
+            content: schema ? { 'application/json': { schema: deepRewriteRefs(schema) } } : undefined,
           };
         }
         convertedOp.responses = responses;
@@ -158,3 +168,4 @@ export function detectSpecVersion(raw: Record<string, unknown>): 'openapi3' | 's
   if (typeof raw.swagger === 'string' && raw.swagger.startsWith('2')) return 'swagger2';
   return 'unknown';
 }
+

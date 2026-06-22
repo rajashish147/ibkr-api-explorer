@@ -9,13 +9,15 @@ import { CATEGORY_ICONS, CATEGORY_COLORS } from '@/lib/parsers/ibkr-classifier';
 import { getMethodBg, cn } from '@/lib/utils';
 import {
   ChevronRight, ChevronDown, Briefcase, User, ShoppingCart, TrendingUp,
-  FileText, ArrowLeftRight, BarChart2, Zap, Lock, Search, Bell, Circle, Star
+  FileText, ArrowLeftRight, BarChart2, Zap, Lock, Search, Bell, Circle, Star,
+  Users, Server, Activity, LineChart
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const ICON_MAP: Record<string, React.ElementType> = {
   Briefcase, User, ShoppingCart, TrendingUp, FileText,
   ArrowLeftRight, BarChart2, Zap, Lock, Search, Bell, Circle, Star,
+  Users, Server, Activity, LineChart
 };
 
 interface EndpointRowProps {
@@ -24,7 +26,7 @@ interface EndpointRowProps {
   onSelect: (endpoint: ParsedEndpoint) => void;
 }
 
-function EndpointRow({ endpoint, isSelected, onSelect }: EndpointRowProps) {
+const EndpointRow = React.memo(function EndpointRow({ endpoint, isSelected, onSelect }: EndpointRowProps) {
   const { toggleFavorite } = useEndpointStore();
 
   return (
@@ -70,7 +72,7 @@ function EndpointRow({ endpoint, isSelected, onSelect }: EndpointRowProps) {
       </button>
     </div>
   );
-}
+});
 
 interface CategoryGroupProps {
   category: IBKRCategory;
@@ -81,7 +83,7 @@ interface CategoryGroupProps {
   onSelect: (endpoint: ParsedEndpoint) => void;
 }
 
-function CategoryGroup({ category, endpoints, isExpanded, onToggle, selectedId, onSelect }: CategoryGroupProps) {
+const CategoryGroup = React.memo(function CategoryGroup({ category, endpoints, isExpanded, onToggle, selectedId, onSelect }: CategoryGroupProps) {
   const IconComp = ICON_MAP[CATEGORY_ICONS[category]] ?? Circle;
   const color = CATEGORY_COLORS[category];
 
@@ -121,9 +123,15 @@ function CategoryGroup({ category, endpoints, isExpanded, onToggle, selectedId, 
       )}
     </div>
   );
-}
+});
 
-export function EndpointTree() {
+import { useVirtualizer } from '@tanstack/react-virtual';
+
+type VirtualRowData = 
+  | { type: 'category'; category: IBKRCategory; endpoints: ParsedEndpoint[]; isExpanded: boolean }
+  | { type: 'endpoint'; endpoint: ParsedEndpoint };
+
+export const EndpointTree = React.memo(function EndpointTree() {
   const { selectedEndpointId, expandedTags, toggleTag, setRequestFromEndpoint } = useEndpointStore();
   const { getActiveEnvironment } = useEnvironmentStore();
   const { groupedResults, resultCount, totalCount, hasQuery } = useSearch();
@@ -131,15 +139,38 @@ export function EndpointTree() {
   const activeEnv = getActiveEnvironment();
   const baseUrl = activeEnv?.variables.find((v) => v.key === 'baseUrl')?.value ?? 'https://localhost:5000/v1/api';
 
-  const handleSelect = (endpoint: ParsedEndpoint) => {
+  const handleSelect = React.useCallback((endpoint: ParsedEndpoint) => {
     useEndpointStore.getState().selectEndpoint(endpoint.id);
     setRequestFromEndpoint(endpoint, baseUrl);
-  };
+  }, [baseUrl, setRequestFromEndpoint]);
 
   const categories = useMemo(
     () => Array.from(groupedResults.entries()).sort(([a], [b]) => a.localeCompare(b)),
     [groupedResults]
   );
+
+  const flatRows = useMemo(() => {
+    const rows: VirtualRowData[] = [];
+    categories.forEach(([category, endpoints]) => {
+      const isExpanded = expandedTags.has(category);
+      rows.push({ type: 'category', category: category as IBKRCategory, endpoints, isExpanded });
+      if (isExpanded) {
+        endpoints.forEach((ep) => {
+          rows.push({ type: 'endpoint', endpoint: ep });
+        });
+      }
+    });
+    return rows;
+  }, [categories, expandedTags]);
+
+  const parentRef = React.useRef<HTMLDivElement>(null);
+
+  const rowVirtualizer = useVirtualizer({
+    count: flatRows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: React.useCallback((i: number) => (flatRows[i].type === 'category' ? 32 : 44), [flatRows]),
+    overscan: 10,
+  });
 
   if (totalCount === 0) {
     return (
@@ -151,25 +182,53 @@ export function EndpointTree() {
   }
 
   return (
-    <ScrollArea className="h-full">
+    <div ref={parentRef} className="h-full overflow-y-auto overflow-x-hidden custom-scrollbar">
       <div className="py-1">
         {hasQuery && (
           <div className="px-3 py-1 text-[10px] text-gray-600">
             {resultCount} of {totalCount} endpoints
           </div>
         )}
-        {categories.map(([category, endpoints]) => (
-          <CategoryGroup
-            key={category}
-            category={category as IBKRCategory}
-            endpoints={endpoints}
-            isExpanded={expandedTags.has(category)}
-            onToggle={() => toggleTag(category)}
-            selectedId={selectedEndpointId}
-            onSelect={handleSelect}
-          />
-        ))}
+        <div
+          style={{
+            height: `${rowVirtualizer.getTotalSize()}px`,
+            width: '100%',
+            position: 'relative',
+          }}
+        >
+          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+            const row = flatRows[virtualRow.index];
+            return (
+              <div
+                key={virtualRow.key}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: `${virtualRow.size}px`,
+                  transform: `translateY(${virtualRow.start}px)`,
+                }}
+              >
+                {row.type === 'category' ? (
+                  <CategoryGroup
+                    category={row.category}
+                    endpoints={row.endpoints}
+                    isExpanded={row.isExpanded}
+                    onToggle={() => toggleTag(row.category)}
+                  />
+                ) : (
+                  <EndpointRow
+                    endpoint={row.endpoint}
+                    isSelected={selectedEndpointId === row.endpoint.id}
+                    onSelect={handleSelect}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
-    </ScrollArea>
+    </div>
   );
-}
+});

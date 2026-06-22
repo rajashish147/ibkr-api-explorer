@@ -24,8 +24,8 @@ function getTypeDisplay(schema: OpenApiSchema): string {
   return base;
 }
 
-function SchemaNode({ name, schema, required, depth = 0 }: SchemaNodeProps) {
-  const [isExpanded, setIsExpanded] = useState(depth < 2);
+const SchemaNode = React.memo(function SchemaNode({ name, schema, required, depth = 0 }: SchemaNodeProps) {
+  const [isExpanded, setIsExpanded] = useState(depth < 1);
 
   const hasChildren =
     (schema.properties && Object.keys(schema.properties).length > 0) ||
@@ -132,7 +132,7 @@ function SchemaNode({ name, schema, required, depth = 0 }: SchemaNodeProps) {
       )}
     </div>
   );
-}
+});
 
 interface SchemaViewerProps {
   schema: OpenApiSchema;

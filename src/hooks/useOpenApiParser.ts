@@ -5,7 +5,7 @@ import * as YAML from 'js-yaml';
 import { OpenApiSpec } from '@/types/openapi';
 import { ParsedEndpoint } from '@/types/endpoint';
 import { parseOpenApiSpec } from '@/lib/parsers/openapi-parser';
-import { parseSwaggerSpec, detectSpecVersion } from '@/lib/parsers/swagger-parser';
+import { parseSwaggerSpec, detectSpecVersion, convertSwaggerToOpenApi } from '@/lib/parsers/swagger-parser';
 import { isIBKRSpec } from '@/lib/parsers/ibkr-classifier';
 import { useOpenApiStore } from '@/stores/useOpenApiStore';
 import { useEndpointStore } from '@/stores/useEndpointStore';
@@ -57,13 +57,8 @@ export function useOpenApiParser(): UseOpenApiParserResult {
     let endpoints: ParsedEndpoint[];
 
     if (version === 'swagger2') {
-      endpoints = parseSwaggerSpec(raw as unknown as Parameters<typeof parseSwaggerSpec>[0]);
-      // For storage, do a basic conversion
-      spec = {
-        openapi: '3.0.0',
-        info: (raw.info as OpenApiSpec['info']) ?? { title: 'API', version: '1.0' },
-        paths: {},
-      };
+      spec = convertSwaggerToOpenApi(raw as unknown as Parameters<typeof parseSwaggerSpec>[0]);
+      endpoints = parseOpenApiSpec(spec);
     } else {
       spec = raw as unknown as OpenApiSpec;
       if (!spec.info) throw new Error('Invalid OpenAPI spec: missing "info" field');
@@ -104,12 +99,8 @@ export function useOpenApiParser(): UseOpenApiParserResult {
         let endpoints: ParsedEndpoint[];
 
         if (version === 'swagger2') {
-          endpoints = parseSwaggerSpec(raw as unknown as Parameters<typeof parseSwaggerSpec>[0]);
-          spec = {
-            openapi: '3.0.0',
-            info: (raw.info as OpenApiSpec['info']) ?? { title: 'API', version: '1.0' },
-            paths: raw.paths as OpenApiSpec['paths'] ?? {},
-          };
+          spec = convertSwaggerToOpenApi(raw as unknown as Parameters<typeof parseSwaggerSpec>[0]);
+          endpoints = parseOpenApiSpec(spec);
         } else {
           spec = raw as unknown as OpenApiSpec;
           if (!spec.paths) spec.paths = {};

@@ -9,10 +9,14 @@ export type IBKRCategory =
   | 'Trades'
   | 'Historical Data'
   | 'Futures'
+  | 'Financial Advisor'
+  | 'Gateway'
   | 'Session'
-  | 'Scanner'
   | 'Alerts'
-  | 'General';
+  | 'Scanner'
+  | 'Performance'
+  | 'Forecasting'
+  | 'Other';
 
 export interface ParsedEndpoint {
   id: string;

@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { ParsedEndpoint, RequestConfig, AuthConfig } from '@/types/endpoint';
 import { generateId } from '@/lib/utils';
+import { idbStorage } from '@/lib/idb-storage';
 
 interface EndpointState {
   endpoints: ParsedEndpoint[];
@@ -167,7 +168,9 @@ export const useEndpointStore = create<EndpointState>()(
     }),
     {
       name: 'ibkr-endpoint-store',
+      storage: createJSONStorage(() => idbStorage),
       partialize: (state) => ({
+        endpoints: state.endpoints,
         selectedEndpointId: state.selectedEndpointId,
         favoriteIds: Array.from(state.favoriteIds),
         currentRequest: state.currentRequest,
@@ -178,7 +181,7 @@ export const useEndpointStore = create<EndpointState>()(
           ...current,
           ...p,
           favoriteIds: new Set(p.favoriteIds ?? []),
-          expandedTags: new Set<string>(),
+          expandedTags: new Set(p.endpoints?.flatMap((e) => e.tags) ?? []),
         };
       },
     }

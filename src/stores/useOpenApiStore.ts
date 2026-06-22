@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { OpenApiSpec } from '@/types/openapi';
-
+import { idbStorage } from '@/lib/idb-storage';
 interface ImportedSpec {
   id: string;
   name: string;
@@ -65,11 +65,9 @@ export const useOpenApiStore = create<OpenApiState>()(
     }),
     {
       name: 'ibkr-openapi-store',
+      storage: createJSONStorage(() => idbStorage),
       partialize: (state) => ({
-        specs: state.specs.map((s) => ({
-          ...s,
-          rawContent: s.rawContent.slice(0, 50000), // limit stored size
-        })),
+        specs: state.specs,
         activeSpecId: state.activeSpecId,
       }),
     }
