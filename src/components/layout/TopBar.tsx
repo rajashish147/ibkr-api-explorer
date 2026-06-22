@@ -37,6 +37,11 @@ export function TopBar() {
   const { getActiveEnvironment } = useEnvironmentStore();
   const activeSpec = specs.find((s) => s.id === activeSpecId);
   const activeEnv = getActiveEnvironment();
+  
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <header className="h-12 flex-shrink-0 border-b border-[#1e1e2e] bg-[#0d0d1a] flex items-center px-4 gap-3 z-20">
@@ -70,7 +75,7 @@ export function TopBar() {
       <div className="flex-1" />
 
       {/* Active spec */}
-      {activeSpec && (
+      {mounted && activeSpec && (
         <div className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-md bg-[#1a1a2e] border border-[#2a2a3e]">
           <FileText className="w-3 h-3 text-purple-400" />
           <span className="text-xs text-gray-400 max-w-[160px] truncate">{activeSpec.name}</span>
@@ -81,7 +86,7 @@ export function TopBar() {
       )}
 
       {/* Environment indicator */}
-      {activeEnv && (
+      {mounted && activeEnv && (
         <button
           onClick={() => setEnvironmentOpen(true)}
           className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-[#1a1a2e] border border-[#2a2a3e] hover:bg-[#1e1e3e] transition-colors"
