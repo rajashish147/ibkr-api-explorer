@@ -144,7 +144,7 @@ export function ResponseViewer() {
         <div className="flex-shrink-0 mx-3 mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
           <p className="text-xs text-red-400">{response.error}</p>
           <p className="text-[11px] text-gray-600 mt-1">
-            Make sure the IBKR Gateway is running and CORS is configured.
+            Make sure the IBKR Client Portal Gateway is running at the configured base URL and that you are logged in.
           </p>
         </div>
       )}

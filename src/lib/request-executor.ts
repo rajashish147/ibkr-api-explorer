@@ -89,10 +89,7 @@ function resolvePathParams(path: string, params: RequestParam[], variables: Envi
 function shouldUseIbkrProxy(url: string): boolean {
   try {
     const parsed = new URL(url);
-    return (
-      parsed.port === '5000' &&
-      (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1' || parsed.hostname === '[::1]')
-    );
+    return parsed.port === '5000';
   } catch {
     return false;
   }

@@ -25,16 +25,41 @@ const HOP_BY_HOP_HEADERS = new Set([
   'upgrade',
 ]);
 
-const LOCAL_GATEWAY_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
+const LOCAL_GATEWAY_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
 
-function isAllowedGatewayUrl(url: URL): boolean {
-  const configured = process.env.IBKR_GATEWAY_ORIGIN;
-  if (configured) {
-    const allowed = new URL(configured);
-    return url.origin === allowed.origin;
+function getConfiguredGatewayOrigins(): Set<string> {
+  const origins = new Set<string>();
+
+  for (const origin of (process.env.IBKR_GATEWAY_ORIGIN ?? '').split(',')) {
+    const trimmed = origin.trim();
+    if (!trimmed) continue;
+    origins.add(new URL(trimmed).origin);
   }
 
-  return LOCAL_GATEWAY_HOSTS.has(url.hostname) && url.port === '5000';
+  return origins;
+}
+
+function isPrivateIpv4(hostname: string): boolean {
+  const parts = hostname.split('.').map((part) => Number(part));
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
+    return false;
+  }
+
+  const [a, b] = parts;
+  return a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 169 && b === 254);
+}
+
+function isAllowedGatewayHost(hostname: string): boolean {
+  return LOCAL_GATEWAY_HOSTS.has(hostname) || isPrivateIpv4(hostname) || hostname.endsWith('.local');
+}
+
+function isAllowedGatewayUrl(url: URL): boolean {
+  const configuredOrigins = getConfiguredGatewayOrigins();
+  if (configuredOrigins.size > 0 && configuredOrigins.has(url.origin)) {
+    return true;
+  }
+
+  return url.port === '5000' && isAllowedGatewayHost(url.hostname);
 }
 
 function cleanHeaders(headers: Record<string, string> | undefined): Record<string, string> {
@@ -108,6 +133,16 @@ function forwardToGateway(payload: Required<Pick<ProxyPayload, 'url' | 'method'>
   });
 }
 
+function formatProxyError(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return String(error);
+  }
+
+  const code = 'code' in error && typeof error.code === 'string' ? error.code : '';
+  const message = error.message || code || error.name;
+  return code && !message.includes(code) ? `${code}: ${message}` : message;
+}
+
 export async function POST(request: Request) {
   let payload: ProxyPayload;
 
@@ -133,7 +168,8 @@ export async function POST(request: Request) {
     return Response.json(
       {
         error: 'Target URL is not allowed',
-        detail: 'The IBKR proxy only forwards to IBKR_GATEWAY_ORIGIN or https://localhost:5000.',
+        detail:
+          'The IBKR proxy forwards to localhost, private LAN hosts on port 5000, or origins listed in IBKR_GATEWAY_ORIGIN.',
       },
       { status: 403 }
     );
@@ -146,7 +182,7 @@ export async function POST(request: Request) {
     return Response.json(
       {
         error: 'Gateway request failed',
-        detail: error instanceof Error ? error.message : String(error),
+        detail: formatProxyError(error),
       },
       { status: 502 }
     );
