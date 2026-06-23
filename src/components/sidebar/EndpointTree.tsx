@@ -34,7 +34,7 @@ const EndpointRow = React.memo(function EndpointRow({ endpoint, isSelected, onSe
     <div
       onClick={() => onSelect(endpoint)}
       className={cn(
-        'group flex items-center gap-2 px-3 py-1.5 cursor-pointer transition-colors relative',
+        'group flex items-center gap-2 pl-5 pr-3 py-1.5 cursor-pointer transition-colors relative',
         isSelected
           ? 'bg-blue-600/20 border-l-2 border-blue-500'
           : 'hover:bg-[#1a1a2e] border-l-2 border-transparent'
@@ -77,52 +77,35 @@ const EndpointRow = React.memo(function EndpointRow({ endpoint, isSelected, onSe
 
 interface CategoryGroupProps {
   category: IBKRCategory;
-  endpoints: ParsedEndpoint[];
+  endpointCount: number;
   isExpanded: boolean;
   onToggle: () => void;
-  selectedId: string | null;
-  onSelect: (endpoint: ParsedEndpoint) => void;
 }
 
-const CategoryGroup = React.memo(function CategoryGroup({ category, endpoints, isExpanded, onToggle, selectedId, onSelect }: CategoryGroupProps) {
+const CategoryGroup = React.memo(function CategoryGroup({ category, endpointCount, isExpanded, onToggle }: CategoryGroupProps) {
   const IconComp = ICON_MAP[CATEGORY_ICONS[category]] ?? Circle;
   const color = CATEGORY_COLORS[category];
 
   return (
-    <div>
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-[#1a1a2e] transition-colors group"
-      >
-        <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
-          {isExpanded ? (
-            <ChevronDown className="w-3.5 h-3.5 text-gray-600" />
-          ) : (
-            <ChevronRight className="w-3.5 h-3.5 text-gray-600" />
-          )}
-        </div>
-        <IconComp className="w-3.5 h-3.5 flex-shrink-0" style={{ color }} />
-        <span className="text-xs font-medium text-gray-400 group-hover:text-gray-200 flex-1 text-left">
-          {category}
-        </span>
-        <span className="text-[10px] text-gray-600 bg-[#1e1e2e] px-1.5 py-0.5 rounded-full">
-          {endpoints.length}
-        </span>
-      </button>
-
-      {isExpanded && (
-        <div className="ml-2">
-          {endpoints.map((ep) => (
-            <EndpointRow
-              key={ep.id}
-              endpoint={ep}
-              isSelected={selectedId === ep.id}
-              onSelect={onSelect}
-            />
-          ))}
-        </div>
-      )}
-    </div>
+    <button
+      onClick={onToggle}
+      className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-[#1a1a2e] transition-colors group"
+    >
+      <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+        {isExpanded ? (
+          <ChevronDown className="w-3.5 h-3.5 text-gray-600" />
+        ) : (
+          <ChevronRight className="w-3.5 h-3.5 text-gray-600" />
+        )}
+      </div>
+      <IconComp className="w-3.5 h-3.5 flex-shrink-0" style={{ color }} />
+      <span className="text-xs font-medium text-gray-400 group-hover:text-gray-200 flex-1 text-left">
+        {category}
+      </span>
+      <span className="text-[10px] text-gray-600 bg-[#1e1e2e] px-1.5 py-0.5 rounded-full">
+        {endpointCount}
+      </span>
+    </button>
   );
 });
 
@@ -213,11 +196,9 @@ export const EndpointTree = React.memo(function EndpointTree() {
                 {row.type === 'category' ? (
                   <CategoryGroup
                     category={row.category}
-                    endpoints={row.endpoints}
+                    endpointCount={row.endpoints.length}
                     isExpanded={row.isExpanded}
                     onToggle={() => toggleTag(row.category)}
-                    selectedId={selectedEndpointId}
-                    onSelect={handleSelect}
                   />
                 ) : (
                   <EndpointRow
