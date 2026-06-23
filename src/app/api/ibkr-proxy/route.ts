@@ -74,6 +74,13 @@ function cleanHeaders(headers: Record<string, string> | undefined): Record<strin
   return nextHeaders;
 }
 
+function buildGatewayHeaders(headers: Record<string, string> | undefined): Record<string, string> {
+  return {
+    ...cleanHeaders(headers),
+    Host: 'localhost:5000',
+  };
+}
+
 function forwardToGateway(payload: Required<Pick<ProxyPayload, 'url' | 'method'>> & ProxyPayload) {
   return new Promise<{
     status: number;
@@ -92,7 +99,7 @@ function forwardToGateway(payload: Required<Pick<ProxyPayload, 'url' | 'method'>
         port: target.port,
         path: `${target.pathname}${target.search}`,
         method: payload.method,
-        headers: cleanHeaders(payload.headers),
+        headers: buildGatewayHeaders(payload.headers),
         rejectUnauthorized: false,
       },
       (response) => {

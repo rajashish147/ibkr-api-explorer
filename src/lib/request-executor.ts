@@ -95,6 +95,14 @@ function shouldUseIbkrProxy(url: string): boolean {
   }
 }
 
+function normalizeGatewayUrl(url: string): string {
+  const parsed = new URL(url);
+  if (parsed.port === '5000' && parsed.protocol === 'http:') {
+    parsed.protocol = 'https:';
+  }
+  return parsed.toString();
+}
+
 interface ProxyResponse {
   status: number;
   statusText: string;
@@ -122,7 +130,7 @@ export async function executeRequest(options: ExecuteRequestOptions): Promise<Ap
   for (const [key, value] of Object.entries(queryParams)) {
     urlObj.searchParams.set(key, value);
   }
-  const finalUrl = urlObj.toString();
+  const finalUrl = normalizeGatewayUrl(urlObj.toString());
 
   // Build headers
   const headers = buildHeaders(config.headers, variables, config.auth);
