@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { useEndpointStore } from '@/stores/useEndpointStore';
 import { useEnvironmentStore } from '@/stores/useEnvironmentStore';
 import { useSearch } from '@/hooks/useSearch';
@@ -125,7 +126,6 @@ const CategoryGroup = React.memo(function CategoryGroup({ category, endpoints, i
   );
 });
 
-import { useVirtualizer } from '@tanstack/react-virtual';
 
 type VirtualRowData = 
   | { type: 'category'; category: IBKRCategory; endpoints: ParsedEndpoint[]; isExpanded: boolean }
@@ -216,6 +216,8 @@ export const EndpointTree = React.memo(function EndpointTree() {
                     endpoints={row.endpoints}
                     isExpanded={row.isExpanded}
                     onToggle={() => toggleTag(row.category)}
+                    selectedId={selectedEndpointId}
+                    onSelect={handleSelect}
                   />
                 ) : (
                   <EndpointRow

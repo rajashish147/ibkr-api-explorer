@@ -107,7 +107,7 @@ function parseOperation(
   });
 
   const tags = operation.tags ?? [];
-  const category = classifyEndpoint(path, tags, operation.operationId);
+  const category = classifyEndpoint(path, tags);
 
   return {
     id: generateId(),

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { useAppStore } from '@/stores/useAppStore';
 import { LeftSidebar } from './LeftSidebar';
 import { CenterPanel } from './CenterPanel';
@@ -14,6 +14,11 @@ export function AppShell() {
   const { sidebarWidth, rightPanelWidth, setSidebarWidth, setRightPanelWidth } = useAppStore();
   const isDraggingLeft = useRef(false);
   const isDraggingRight = useRef(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleMouseMoveLeft = useCallback(
     (e: MouseEvent) => {
@@ -57,6 +62,15 @@ export function AppShell() {
     window.addEventListener('mousemove', handleMouseMoveRight);
     window.addEventListener('mouseup', handleMouseUp);
   }, [handleMouseMoveRight, handleMouseUp]);
+
+  if (!mounted) {
+    return (
+      <div className="flex flex-col h-screen bg-[#0a0a0f] text-gray-100 overflow-hidden">
+        <div className="h-12 flex-shrink-0 border-b border-[#1e1e2e] bg-[#0d0d1a]" />
+        <div className="flex flex-1 overflow-hidden" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen bg-[#0a0a0f] text-gray-100 overflow-hidden">
