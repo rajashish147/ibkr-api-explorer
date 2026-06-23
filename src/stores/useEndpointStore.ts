@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { ParsedEndpoint, RequestConfig, AuthConfig } from '@/types/endpoint';
-import { generateId } from '@/lib/utils';
 import { idbStorage } from '@/lib/idb-storage';
 
 interface EndpointState {

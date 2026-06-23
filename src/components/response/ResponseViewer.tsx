@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useResponseStore } from '@/stores/useResponseStore';
 import { useAutoExtract } from '@/hooks/useAutoExtract';
 import { JsonViewer } from './JsonViewer';

@@ -1,17 +1,17 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useEndpointStore } from '@/stores/useEndpointStore';
 import { useResponseStore } from '@/stores/useResponseStore';
 import { useRequestExecutor } from '@/hooks/useRequestExecutor';
 import { useCollectionStore } from '@/stores/useCollectionStore';
-import { ParsedEndpoint, RequestParam } from '@/types/endpoint';
+import { ParsedEndpoint } from '@/types/endpoint';
 import { ParamEditor } from './ParamEditor';
 import { HeaderEditor } from './HeaderEditor';
 import { BodyEditor } from './BodyEditor';
 import { AuthEditor } from './AuthEditor';
 import { HTTP_METHODS, getMethodBg, cn } from '@/lib/utils';
-import { Play, Square, Save, Loader2, AlertCircle } from 'lucide-react';
+import { Play, Square, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -28,8 +28,7 @@ export function RequestBuilder({ endpoint }: RequestBuilderProps) {
   const { status, abort } = useResponseStore();
   const { execute } = useRequestExecutor();
   const { collections, addRequest } = useCollectionStore();
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveCollectionId, setSaveCollectionId] = useState(collections[0]?.id ?? '');
+  const saveCollectionId = collections[0]?.id ?? '';
 
   const isLoading = status === 'loading';
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { OpenApiSchema } from '@/types/openapi';
 import Editor from '@monaco-editor/react';
 import { cn } from '@/lib/utils';
@@ -13,6 +13,8 @@ interface BodyEditorProps {
 }
 
 export function BodyEditor({ body, bodyType, schema, onChange }: BodyEditorProps) {
+  const hasSchema = Boolean(schema);
+
   return (
     <div className="flex flex-col h-full">
       {/* Type selector */}
@@ -63,7 +65,7 @@ export function BodyEditor({ body, bodyType, schema, onChange }: BodyEditorProps
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center text-xs text-gray-700">
-          No request body
+          {hasSchema ? 'Request body schema available' : 'No request body'}
         </div>
       )}
     </div>

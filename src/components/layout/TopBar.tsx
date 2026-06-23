@@ -6,16 +6,9 @@ import { useOpenApiStore } from '@/stores/useOpenApiStore';
 import { useEnvironmentStore } from '@/stores/useEnvironmentStore';
 import {
   Upload, Settings, TrendingUp, ShoppingCart, Zap, Briefcase,
-  FileText, Play, ChevronDown, Activity, Globe
+  FileText, Play, Activity, Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 

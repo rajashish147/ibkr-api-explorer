@@ -4,13 +4,12 @@ import React, { useState } from 'react';
 import { IBKROrder, OrderType, OrderSide, OrderTIF } from '@/types/ibkr';
 import { useEnvironmentStore } from '@/stores/useEnvironmentStore';
 import { prettyJson, copyToClipboard } from '@/lib/utils';
-import { ShoppingCart, Copy, Wand2 } from 'lucide-react';
+import { ShoppingCart, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 

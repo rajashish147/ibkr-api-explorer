@@ -5,7 +5,7 @@ import * as YAML from 'js-yaml';
 import { OpenApiSpec } from '@/types/openapi';
 import { ParsedEndpoint } from '@/types/endpoint';
 import { parseOpenApiSpec } from '@/lib/parsers/openapi-parser';
-import { parseSwaggerSpec, detectSpecVersion, convertSwaggerToOpenApi } from '@/lib/parsers/swagger-parser';
+import { detectSpecVersion, convertSwaggerToOpenApi } from '@/lib/parsers/swagger-parser';
 import { isIBKRSpec } from '@/lib/parsers/ibkr-classifier';
 import { useOpenApiStore } from '@/stores/useOpenApiStore';
 import { useEndpointStore } from '@/stores/useEndpointStore';
@@ -33,42 +33,6 @@ export function useOpenApiParser(): UseOpenApiParserResult {
   const { addSpec } = useOpenApiStore();
   const { setEndpoints } = useEndpointStore();
 
-  const parseRaw = useCallback((text: string): { raw: Record<string, unknown>; spec: OpenApiSpec; version: 'openapi3' | 'swagger2' | 'unknown' } => {
-    let raw: Record<string, unknown>;
-
-    // Try JSON first, then YAML
-    try {
-      raw = JSON.parse(text);
-    } catch {
-      try {
-        raw = YAML.load(text) as Record<string, unknown>;
-      } catch (yamlErr) {
-        throw new Error(`Failed to parse as JSON or YAML: ${(yamlErr as Error).message}`);
-      }
-    }
-
-    if (!raw || typeof raw !== 'object') {
-      throw new Error('Invalid specification: not an object');
-    }
-
-    const version = detectSpecVersion(raw);
-
-    let spec: OpenApiSpec;
-    let endpoints: ParsedEndpoint[];
-
-    if (version === 'swagger2') {
-      spec = convertSwaggerToOpenApi(raw as unknown as Parameters<typeof parseSwaggerSpec>[0]);
-      endpoints = parseOpenApiSpec(spec);
-    } else {
-      spec = raw as unknown as OpenApiSpec;
-      if (!spec.info) throw new Error('Invalid OpenAPI spec: missing "info" field');
-      if (!spec.paths) throw new Error('Invalid OpenAPI spec: missing "paths" field');
-      endpoints = parseOpenApiSpec(spec);
-    }
-
-    return { raw, spec, version };
-  }, []);
-
   const parseFromText = useCallback(
     async (
       text: string,
@@ -82,7 +46,6 @@ export function useOpenApiParser(): UseOpenApiParserResult {
       try {
         let raw: Record<string, unknown>;
         let spec: OpenApiSpec;
-        let version: 'openapi3' | 'swagger2' | 'unknown';
 
         try {
           raw = JSON.parse(text);
@@ -94,12 +57,12 @@ export function useOpenApiParser(): UseOpenApiParserResult {
           throw new Error('Invalid specification: not an object');
         }
 
-        version = detectSpecVersion(raw);
+        const version = detectSpecVersion(raw);
 
         let endpoints: ParsedEndpoint[];
 
         if (version === 'swagger2') {
-          spec = convertSwaggerToOpenApi(raw as unknown as Parameters<typeof parseSwaggerSpec>[0]);
+          spec = convertSwaggerToOpenApi(raw as unknown as Parameters<typeof convertSwaggerToOpenApi>[0]);
           endpoints = parseOpenApiSpec(spec);
         } else {
           spec = raw as unknown as OpenApiSpec;

@@ -7,6 +7,7 @@ import { generateId } from './utils';
 export interface ExecuteRequestOptions {
   config: RequestConfig;
   variables: EnvironmentVariable[];
+  signal?: AbortSignal;
   onLog?: (level: 'info' | 'warn' | 'error' | 'debug', message: string, data?: unknown) => void;
 }
 
@@ -85,8 +86,29 @@ function resolvePathParams(path: string, params: RequestParam[], variables: Envi
   return resolved;
 }
 
+function shouldUseIbkrProxy(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return (
+      parsed.port === '5000' &&
+      (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1' || parsed.hostname === '[::1]')
+    );
+  } catch {
+    return false;
+  }
+}
+
+interface ProxyResponse {
+  status: number;
+  statusText: string;
+  headers: Record<string, string>;
+  body: string;
+  error?: string;
+  detail?: string;
+}
+
 export async function executeRequest(options: ExecuteRequestOptions): Promise<ApiResponse> {
-  const { config, variables, onLog } = options;
+  const { config, variables, signal, onLog } = options;
   const startTime = Date.now();
 
   onLog?.('info', `Executing ${config.method} ${config.url}`);
@@ -128,9 +150,27 @@ export async function executeRequest(options: ExecuteRequestOptions): Promise<Ap
       headers,
       body: body,
       credentials: 'include',
+      signal,
     };
 
-    const response = await fetch(finalUrl, fetchOptions);
+    const useProxy = shouldUseIbkrProxy(finalUrl);
+    if (useProxy) {
+      onLog?.('info', 'Routing request through local IBKR proxy');
+    }
+
+    const response = useProxy
+      ? await fetch('/api/ibkr-proxy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url: finalUrl,
+            method: config.method,
+            headers,
+            body,
+          }),
+          signal,
+        })
+      : await fetch(finalUrl, fetchOptions);
     const duration = Date.now() - startTime;
 
     const responseHeaders: Record<string, string> = {};
@@ -138,10 +178,33 @@ export async function executeRequest(options: ExecuteRequestOptions): Promise<Ap
       responseHeaders[key] = value;
     });
 
-    const rawBody = await response.text();
+    let rawBody = await response.text();
+    let status = response.status;
+    let statusText = response.statusText;
+    let headersForResult = responseHeaders;
+
+    if (useProxy) {
+      let proxyBody: ProxyResponse;
+
+      try {
+        proxyBody = JSON.parse(rawBody) as ProxyResponse;
+      } catch {
+        throw new Error(`Invalid proxy response: ${rawBody}`);
+      }
+
+      if (!response.ok || proxyBody.error) {
+        throw new Error(proxyBody.detail || proxyBody.error || `Proxy failed with HTTP ${response.status}`);
+      }
+
+      rawBody = proxyBody.body;
+      status = proxyBody.status;
+      statusText = proxyBody.statusText;
+      headersForResult = proxyBody.headers;
+    }
+
     let parsedBody: unknown = rawBody;
 
-    const contentType = response.headers.get('content-type') ?? '';
+    const contentType = Object.entries(headersForResult).find(([key]) => key.toLowerCase() === 'content-type')?.[1] ?? '';
     if (contentType.includes('application/json')) {
       try {
         parsedBody = JSON.parse(rawBody);
@@ -152,13 +215,13 @@ export async function executeRequest(options: ExecuteRequestOptions): Promise<Ap
 
     const size = new TextEncoder().encode(rawBody).length;
 
-    onLog?.('info', `Response: ${response.status} ${response.statusText} (${duration}ms)`);
+    onLog?.('info', `Response: ${status} ${statusText} (${duration}ms)`);
 
     return {
       id: generateId(),
-      status: response.status,
-      statusText: response.statusText,
-      headers: responseHeaders,
+      status,
+      statusText,
+      headers: headersForResult,
       body: parsedBody,
       rawBody,
       size,
@@ -171,7 +234,9 @@ export async function executeRequest(options: ExecuteRequestOptions): Promise<Ap
     const duration = Date.now() - startTime;
     const error = err as Error;
 
-    onLog?.('error', `Request failed: ${error.message}`);
+    const message = error.name === 'AbortError' ? 'Request cancelled' : error.message;
+
+    onLog?.('error', `Request failed: ${message}`);
 
     return {
       id: generateId(),
@@ -185,7 +250,7 @@ export async function executeRequest(options: ExecuteRequestOptions): Promise<Ap
       timestamp: Date.now(),
       requestConfig: config,
       url: finalUrl,
-      error: error.message,
+      error: message,
     };
   }
 }

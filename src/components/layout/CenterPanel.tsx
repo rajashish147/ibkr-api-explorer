@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 
 export function CenterPanel() {
   const { activePanel, setImportOpen } = useAppStore();
-  const { endpoints, selectedEndpointId } = useEndpointStore();
+  const { endpoints } = useEndpointStore();
 
   const hasEndpoints = endpoints.length > 0;
 

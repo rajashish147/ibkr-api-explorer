@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useCallback, useState, useEffect } from 'react';
+import React, { useRef, useCallback, useSyncExternalStore } from 'react';
 import { useAppStore } from '@/stores/useAppStore';
 import { LeftSidebar } from './LeftSidebar';
 import { CenterPanel } from './CenterPanel';
@@ -14,11 +14,11 @@ export function AppShell() {
   const { sidebarWidth, rightPanelWidth, setSidebarWidth, setRightPanelWidth } = useAppStore();
   const isDraggingLeft = useRef(false);
   const isDraggingRight = useRef(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
   const handleMouseMoveLeft = useCallback(
     (e: MouseEvent) => {
@@ -44,7 +44,6 @@ export function AppShell() {
     document.body.style.userSelect = '';
     window.removeEventListener('mousemove', handleMouseMoveLeft);
     window.removeEventListener('mousemove', handleMouseMoveRight);
-    window.removeEventListener('mouseup', handleMouseUp);
   }, [handleMouseMoveLeft, handleMouseMoveRight]);
 
   const startDragLeft = useCallback(() => {
@@ -52,7 +51,7 @@ export function AppShell() {
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
     window.addEventListener('mousemove', handleMouseMoveLeft);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mouseup', handleMouseUp, { once: true });
   }, [handleMouseMoveLeft, handleMouseUp]);
 
   const startDragRight = useCallback(() => {
@@ -60,7 +59,7 @@ export function AppShell() {
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
     window.addEventListener('mousemove', handleMouseMoveRight);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mouseup', handleMouseUp, { once: true });
   }, [handleMouseMoveRight, handleMouseUp]);
 
   if (!mounted) {

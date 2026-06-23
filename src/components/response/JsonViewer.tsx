@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { prettyJson, cn } from '@/lib/utils';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -16,7 +15,7 @@ function JsonNode({ data, depth = 0, keyName, isLast = true }: JsonNodeProps) {
   const [isExpanded, setIsExpanded] = useState(depth < 3);
 
   const renderKey = keyName !== undefined ? (
-    <span className="text-blue-300 mr-1">"{keyName}"<span className="text-gray-600">: </span></span>
+    <span className="text-blue-300 mr-1">&quot;{keyName}&quot;<span className="text-gray-600">: </span></span>
   ) : null;
 
   if (data === null) {
@@ -53,10 +52,10 @@ function JsonNode({ data, depth = 0, keyName, isLast = true }: JsonNodeProps) {
         {renderKey}
         {isUrl ? (
           <a href={data} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">
-            "{data}"
+            &quot;{data}&quot;
           </a>
         ) : (
-          <span className="text-emerald-400">"{data}"</span>
+          <span className="text-emerald-400">&quot;{data}&quot;</span>
         )}
         {!isLast && <span className="text-gray-700">,</span>}
       </div>

@@ -13,7 +13,6 @@ import {
   FileText, ArrowLeftRight, BarChart2, Zap, Lock, Search, Bell, Circle, Star,
   Users, Server, Activity, LineChart
 } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 const ICON_MAP: Record<string, React.ElementType> = {
   Briefcase, User, ShoppingCart, TrendingUp, FileText,

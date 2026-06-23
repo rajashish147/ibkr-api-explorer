@@ -7,7 +7,7 @@ import { useHistoryStore } from '@/stores/useHistoryStore';
 import { executeRequest } from '@/lib/request-executor';
 import { CollectionItem, RequestRunResult } from '@/types/collection';
 import { getMethodBg, getStatusBg, formatDuration, cn } from '@/lib/utils';
-import { Play, Square, CheckCircle2, XCircle, Clock, ChevronRight, Loader2 } from 'lucide-react';
+import { Play, Square, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
@@ -26,7 +26,6 @@ export function CollectionRunner() {
   const [isRunning, setIsRunning] = useState(false);
   const [results, setResults] = useState<RequestRunResult[]>([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
-  const [aborted, setAborted] = useState(false);
   const abortRef = React.useRef(false);
 
   const selectedCollection = collections.find((c) => c.id === selectedCollectionId) ?? collections[0];
@@ -50,7 +49,6 @@ export function CollectionRunner() {
     if (requests.length === 0) return;
 
     setIsRunning(true);
-    setAborted(false);
     abortRef.current = false;
     setResults(requests.map((r) => ({ requestId: r.id, requestName: r.name, status: 'skipped' })));
 
@@ -110,7 +108,6 @@ export function CollectionRunner() {
 
   const handleAbort = () => {
     abortRef.current = true;
-    setAborted(true);
     setIsRunning(false);
   };
 

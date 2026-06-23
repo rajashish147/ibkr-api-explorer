@@ -4,7 +4,8 @@ import fs from 'fs';
 // but we need to run it properly. Let's just use tsx directly.
 import { convertSwaggerToOpenApi, detectSpecVersion } from './src/lib/parsers/swagger-parser';
 import { parseOpenApiSpec } from './src/lib/parsers/openapi-parser';
-import { IBKRCategory } from './src/types/endpoint';
+import { ParsedEndpoint } from './src/types/endpoint';
+import { OpenApiSpec } from './src/types/openapi';
 import { classifyEndpoint } from './src/lib/parsers/ibkr-classifier';
 
 async function run() {
@@ -14,14 +15,14 @@ async function run() {
   const raw = JSON.parse(rawData);
   const version = detectSpecVersion(raw);
   
-  let spec;
-  let endpoints;
+  let spec: OpenApiSpec;
+  let endpoints: ParsedEndpoint[];
   
   if (version === 'swagger2') {
-    spec = convertSwaggerToOpenApi(raw as any);
+    spec = convertSwaggerToOpenApi(raw as Parameters<typeof convertSwaggerToOpenApi>[0]);
     endpoints = parseOpenApiSpec(spec);
   } else {
-    spec = raw;
+    spec = raw as OpenApiSpec;
     endpoints = parseOpenApiSpec(spec);
   }
   
@@ -35,7 +36,7 @@ async function run() {
   
   const end = performance.now();
   
-  const tags = new Set();
+  const tags = new Set<string>();
   const categories = new Map<string, number>();
   endpoints.forEach(ep => {
     ep.tags.forEach(t => tags.add(t));

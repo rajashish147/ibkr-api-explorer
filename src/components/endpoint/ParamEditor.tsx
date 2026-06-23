@@ -3,9 +3,8 @@
 import React from 'react';
 import { RequestParam } from '@/types/endpoint';
 import { ParsedParameter } from '@/types/endpoint';
-import { Plus, X, AlertCircle } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { generateId } from '@/lib/utils';
 
 interface ParamEditorProps {
   params: RequestParam[];

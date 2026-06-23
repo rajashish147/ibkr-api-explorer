@@ -1,15 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useEndpointStore } from '@/stores/useEndpointStore';
-import { useEnvironmentStore } from '@/stores/useEnvironmentStore';
-import { useRequestExecutor } from '@/hooks/useRequestExecutor';
-import { IBKRMarketData } from '@/types/ibkr';
-import { TrendingUp, TrendingDown, RefreshCw, Plus, X, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown, Plus, X, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, ResponsiveContainer } from 'recharts';
 
 // Simulated market data for demonstration
 function generateMockData(base: number, points = 20): Array<{ time: string; price: number }> {

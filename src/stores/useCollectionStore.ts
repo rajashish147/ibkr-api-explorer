@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Collection, CollectionItem, SavedRequest } from '@/types/collection';
-import { RequestConfig } from '@/types/endpoint';
 import { generateId } from '@/lib/utils';
 
 interface CollectionState {

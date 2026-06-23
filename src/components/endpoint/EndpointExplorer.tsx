@@ -2,11 +2,10 @@
 
 import React, { useState } from 'react';
 import { useEndpointStore } from '@/stores/useEndpointStore';
-import { useRequestExecutor } from '@/hooks/useRequestExecutor';
 import { RequestBuilder } from './RequestBuilder';
 import { SchemaViewer } from './SchemaViewer';
 import { getMethodBg, cn } from '@/lib/utils';
-import { Tag, AlertTriangle, ExternalLink, Code2 } from 'lucide-react';
+import { Tag, AlertTriangle, Code2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';

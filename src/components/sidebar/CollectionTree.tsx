@@ -3,12 +3,11 @@
 import React, { useState } from 'react';
 import { useCollectionStore } from '@/stores/useCollectionStore';
 import { useEndpointStore } from '@/stores/useEndpointStore';
-import { useEnvironmentStore } from '@/stores/useEnvironmentStore';
-import { CollectionItem, SavedRequest } from '@/types/collection';
+import { CollectionItem } from '@/types/collection';
 import { getMethodBg, cn, downloadJson } from '@/lib/utils';
 import {
   ChevronRight, ChevronDown, Folder, FolderOpen, Plus, MoreHorizontal,
-  Trash2, Copy, Download, Play, FileJson
+  Trash2, Copy, Download, FileJson
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -25,8 +24,7 @@ interface CollectionItemRowProps {
 
 function CollectionItemRow({ item, collectionId, depth }: CollectionItemRowProps) {
   const { removeItem, duplicateRequest, selectedItemId, setSelectedItem } = useCollectionStore();
-  const { setRequestFromEndpoint, updateRequest } = useEndpointStore();
-  const { getActiveEnvironment } = useEnvironmentStore();
+  const { updateRequest } = useEndpointStore();
   const [isExpanded, setIsExpanded] = useState(item.isExpanded ?? true);
   const isSelected = selectedItemId === item.id;
 
@@ -36,8 +34,6 @@ function CollectionItemRow({ item, collectionId, depth }: CollectionItemRowProps
       setIsExpanded((e) => !e);
     } else if (item.request) {
       // Load request into builder
-      const env = getActiveEnvironment();
-      const baseUrl = env?.variables.find((v) => v.key === 'baseUrl')?.value ?? '';
       updateRequest(item.request.config);
     }
   };

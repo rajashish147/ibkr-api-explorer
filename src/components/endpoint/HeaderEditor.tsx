@@ -20,7 +20,7 @@ const COMMON_HEADERS = [
   'User-Agent',
 ];
 
-export function HeaderEditor({ headers, onChange, paramDefs = [] }: HeaderEditorProps) {
+export function HeaderEditor({ headers, onChange }: HeaderEditorProps) {
   const update = (index: number, field: keyof RequestParam, value: string | boolean) => {
     const next = headers.map((h, i) => (i === index ? { ...h, [field]: value } : h));
     onChange(next);

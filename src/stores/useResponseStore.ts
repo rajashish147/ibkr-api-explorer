@@ -26,7 +26,7 @@ export const useResponseStore = create<ResponseState>()((set, get) => ({
   consoleLogs: [],
   abortController: null,
 
-  setResponse: (response) => set({ response, status: 'success' }),
+  setResponse: (response) => set({ response }),
 
   setStatus: (status) => set({ status }),
 

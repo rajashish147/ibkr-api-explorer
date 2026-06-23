@@ -29,6 +29,7 @@ export function useRequestExecutor() {
         const options: ExecuteRequestOptions = {
           config,
           variables,
+          signal: controller.signal,
           onLog: addLog,
         };
 

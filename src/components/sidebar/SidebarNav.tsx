@@ -7,7 +7,6 @@ import { useCollectionStore } from '@/stores/useCollectionStore';
 import { useHistoryStore } from '@/stores/useHistoryStore';
 import { Globe, FolderOpen, Clock, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { ElementType } from 'react';
 
 type Tab = 'endpoints' | 'collections' | 'history' | 'favorites' | 'environments';
 

@@ -3,12 +3,12 @@
 import React, { useState } from 'react';
 import { useAppStore } from '@/stores/useAppStore';
 import { useEnvironmentStore } from '@/stores/useEnvironmentStore';
-import { Environment, EnvironmentVariable } from '@/types/environment';
+import { EnvironmentVariable } from '@/types/environment';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Trash2, Eye, EyeOff, Save, X, Settings } from 'lucide-react';
+import { Plus, Trash2, Eye, EyeOff, X, Settings } from 'lucide-react';
 import { cn, generateId } from '@/lib/utils';
 import { toast } from 'sonner';
 

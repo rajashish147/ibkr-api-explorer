@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Briefcase, TrendingUp, TrendingDown, DollarSign, Activity, PieChart } from 'lucide-react';
+import { Briefcase, TrendingUp, TrendingDown, DollarSign, PieChart } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 const DEMO_ACCOUNTS = [
@@ -16,8 +16,6 @@ const DEMO_POSITIONS = [
   { symbol: 'SPY', description: 'SPDR S&P 500 ETF', position: 10, mktValue: 5421.25, unrealizedPnl: 421.25, pct: 4.3 },
   { symbol: 'TSLA', description: 'Tesla Inc.', position: -5, mktValue: -1242.50, unrealizedPnl: -265.50, pct: -1.0 },
 ];
-
-const totalNlv = DEMO_ACCOUNTS.reduce((sum, a) => sum + a.netliq, 0);
 
 export function PortfolioMonitor() {
   return (
