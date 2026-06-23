@@ -157,7 +157,9 @@ export function AuthEditor({ auth, onChange }: AuthEditorProps) {
           {auth.type === 'session' && (
             <p className="text-[10px] text-gray-700">
               For IBKR Web API, authentication is managed via the Gateway/Client Portal session.
-              The session cookie is automatically sent with credential: include.
+              Gateway requests are proxied server-side, so paste the cookie here or set the
+              <span className="text-gray-500"> sessionCookie </span>
+              environment variable after logging in at https://localhost:5000.
             </p>
           )}
         </div>

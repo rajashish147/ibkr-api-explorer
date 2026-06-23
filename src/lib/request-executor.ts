@@ -3,6 +3,7 @@ import { ApiResponse } from '@/types/response';
 import { EnvironmentVariable } from '@/types/environment';
 import { resolveVariables } from './variable-resolver';
 import { generateId } from './utils';
+import { getSessionCookieFromVariables } from './ibkr-session';
 
 export interface ExecuteRequestOptions {
   config: RequestConfig;
@@ -107,6 +108,7 @@ interface ProxyResponse {
   status: number;
   statusText: string;
   headers: Record<string, string>;
+  setCookies?: string[];
   body: string;
   error?: string;
   detail?: string;
@@ -134,6 +136,15 @@ export async function executeRequest(options: ExecuteRequestOptions): Promise<Ap
 
   // Build headers
   const headers = buildHeaders(config.headers, variables, config.auth);
+  const useProxy = shouldUseIbkrProxy(finalUrl);
+
+  if (useProxy && !headers.Cookie && !headers.cookie) {
+    const sessionCookie = getSessionCookieFromVariables(variables);
+    if (sessionCookie) {
+      headers.Cookie = resolveVariables(sessionCookie, variables);
+      onLog?.('info', 'Using IBKR session cookie from environment');
+    }
+  }
 
   // Build body
   let body: BodyInit | null = null;
@@ -158,7 +169,6 @@ export async function executeRequest(options: ExecuteRequestOptions): Promise<Ap
       signal,
     };
 
-    const useProxy = shouldUseIbkrProxy(finalUrl);
     if (useProxy) {
       onLog?.('info', 'Routing request through local IBKR proxy');
     }
@@ -187,6 +197,7 @@ export async function executeRequest(options: ExecuteRequestOptions): Promise<Ap
     let status = response.status;
     let statusText = response.statusText;
     let headersForResult = responseHeaders;
+    let capturedSetCookies: string[] | undefined;
 
     if (useProxy) {
       let proxyBody: ProxyResponse;
@@ -205,6 +216,7 @@ export async function executeRequest(options: ExecuteRequestOptions): Promise<Ap
       status = proxyBody.status;
       statusText = proxyBody.statusText;
       headersForResult = proxyBody.headers;
+      capturedSetCookies = proxyBody.setCookies;
     }
 
     let parsedBody: unknown = rawBody;
@@ -222,6 +234,13 @@ export async function executeRequest(options: ExecuteRequestOptions): Promise<Ap
 
     onLog?.('info', `Response: ${status} ${statusText} (${duration}ms)`);
 
+    if (useProxy && !headers.Cookie && status === 403) {
+      onLog?.(
+        'warn',
+        'Gateway returned 403. Log in at https://localhost:5000, copy the session cookie into the sessionCookie environment variable, or authenticate via /sso/validate first.'
+      );
+    }
+
     return {
       id: generateId(),
       status,
@@ -234,6 +253,7 @@ export async function executeRequest(options: ExecuteRequestOptions): Promise<Ap
       timestamp: Date.now(),
       requestConfig: config,
       url: finalUrl,
+      capturedSetCookies,
     };
   } catch (err) {
     const duration = Date.now() - startTime;

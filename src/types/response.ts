@@ -13,6 +13,7 @@ export interface ApiResponse {
   requestConfig: RequestConfig;
   url: string;
   error?: string;
+  capturedSetCookies?: string[];
 }
 
 export type ResponseStatus = 'idle' | 'loading' | 'success' | 'error';

@@ -28,6 +28,7 @@ export const DEFAULT_IBKR_ENVIRONMENTS: Omit<Environment, 'id' | 'createdAt' | '
     color: '#22c55e',
     variables: [
       { id: 'dev-1', key: 'baseUrl', value: 'https://localhost:5000/v1/api', description: 'Base URL', enabled: true, sensitive: false },
+      { id: 'dev-7', key: 'sessionCookie', value: '', description: 'IBKR gateway session cookie (from browser login or /sso/validate)', enabled: true, sensitive: true },
       { id: 'dev-2', key: 'accountId', value: '', description: 'IBKR Account ID', enabled: true, sensitive: true },
       { id: 'dev-3', key: 'conid', value: '', description: 'Contract ID', enabled: true, sensitive: false },
       { id: 'dev-4', key: 'orderId', value: '', description: 'Order ID', enabled: true, sensitive: false },
@@ -42,6 +43,7 @@ export const DEFAULT_IBKR_ENVIRONMENTS: Omit<Environment, 'id' | 'createdAt' | '
     color: '#f59e0b',
     variables: [
       { id: 'paper-1', key: 'baseUrl', value: 'https://localhost:5000/v1/api', description: 'Base URL', enabled: true, sensitive: false },
+      { id: 'paper-7', key: 'sessionCookie', value: '', description: 'IBKR gateway session cookie (from browser login or /sso/validate)', enabled: true, sensitive: true },
       { id: 'paper-2', key: 'accountId', value: '', description: 'Paper Account ID', enabled: true, sensitive: true },
       { id: 'paper-3', key: 'conid', value: '', description: 'Contract ID', enabled: true, sensitive: false },
       { id: 'paper-4', key: 'orderId', value: '', description: 'Order ID', enabled: true, sensitive: false },
@@ -56,6 +58,7 @@ export const DEFAULT_IBKR_ENVIRONMENTS: Omit<Environment, 'id' | 'createdAt' | '
     color: '#ef4444',
     variables: [
       { id: 'live-1', key: 'baseUrl', value: 'https://localhost:5000/v1/api', description: 'Base URL', enabled: true, sensitive: false },
+      { id: 'live-7', key: 'sessionCookie', value: '', description: 'IBKR gateway session cookie (from browser login or /sso/validate)', enabled: true, sensitive: true },
       { id: 'live-2', key: 'accountId', value: '', description: 'Live Account ID', enabled: true, sensitive: true },
       { id: 'live-3', key: 'conid', value: '', description: 'Contract ID', enabled: true, sensitive: false },
       { id: 'live-4', key: 'orderId', value: '', description: 'Order ID', enabled: true, sensitive: false },

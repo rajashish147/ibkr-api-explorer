@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 import { executeRequest, ExecuteRequestOptions } from '@/lib/request-executor';
+import { mergeCookieHeaders } from '@/lib/ibkr-session';
 import { useEnvironmentStore } from '@/stores/useEnvironmentStore';
 import { useResponseStore } from '@/stores/useResponseStore';
 import { useHistoryStore } from '@/stores/useHistoryStore';
@@ -9,7 +10,7 @@ import { useEndpointStore } from '@/stores/useEndpointStore';
 import { RequestConfig } from '@/types/endpoint';
 
 export function useRequestExecutor() {
-  const { getActiveVariables } = useEnvironmentStore();
+  const { getActiveVariables, setVariableValue } = useEnvironmentStore();
   const { setResponse, setStatus, addLog, clearLogs, setAbortController } = useResponseStore();
   const { addEntry } = useHistoryStore();
   const { currentRequest, selectedEndpointId } = useEndpointStore();
@@ -34,6 +35,13 @@ export function useRequestExecutor() {
         };
 
         const response = await executeRequest(options);
+
+        if (response.capturedSetCookies?.length) {
+          const currentCookie = getActiveVariables().find((variable) => variable.key === 'sessionCookie')?.value;
+          const mergedCookie = mergeCookieHeaders(currentCookie, response.capturedSetCookies);
+          setVariableValue('sessionCookie', mergedCookie);
+          addLog('info', 'IBKR session cookie saved to environment');
+        }
 
         if (response.error && response.status === 0) {
           setStatus('error');
@@ -64,7 +72,7 @@ export function useRequestExecutor() {
         return null;
       }
     },
-    [currentRequest, getActiveVariables, setResponse, setStatus, addLog, clearLogs, setAbortController, addEntry, selectedEndpointId]
+    [currentRequest, getActiveVariables, setVariableValue, setResponse, setStatus, addLog, clearLogs, setAbortController, addEntry, selectedEndpointId]
   );
 
   return { execute };

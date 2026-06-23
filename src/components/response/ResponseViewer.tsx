@@ -140,6 +140,19 @@ export function ResponseViewer() {
         </div>
       </div>
 
+      {!isError && response.status === 403 && (
+        <div className="flex-shrink-0 mx-3 mt-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+          <p className="text-xs text-amber-300">403 Access Denied — IBKR session not authenticated</p>
+          <p className="text-[11px] text-gray-600 mt-1">
+            Postman sends cookies directly to the gateway; this app proxies through localhost:3000 and does not
+            share the gateway login cookie automatically. Log in at https://localhost:5000, copy the session cookie
+            into the <span className="text-gray-500">sessionCookie</span> environment variable, or run
+            <span className="text-gray-500"> /sso/validate </span>
+            first so the cookie is captured.
+          </p>
+        </div>
+      )}
+
       {isError && response.error && (
         <div className="flex-shrink-0 mx-3 mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
           <p className="text-xs text-red-400">{response.error}</p>

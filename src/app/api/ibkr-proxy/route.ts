@@ -74,10 +74,15 @@ function cleanHeaders(headers: Record<string, string> | undefined): Record<strin
   return nextHeaders;
 }
 
-function buildGatewayHeaders(headers: Record<string, string> | undefined): Record<string, string> {
+function buildGatewayHeaders(
+  headers: Record<string, string> | undefined,
+  target: URL
+): Record<string, string> {
+  const host = target.port ? `${target.hostname}:${target.port}` : target.hostname;
+
   return {
     ...cleanHeaders(headers),
-    Host: 'localhost:5000',
+    Host: host,
   };
 }
 
@@ -86,6 +91,7 @@ function forwardToGateway(payload: Required<Pick<ProxyPayload, 'url' | 'method'>
     status: number;
     statusText: string;
     headers: Record<string, string>;
+    setCookies: string[];
     body: string;
   }>((resolve, reject) => {
     const target = new URL(payload.url);
@@ -99,7 +105,7 @@ function forwardToGateway(payload: Required<Pick<ProxyPayload, 'url' | 'method'>
         port: target.port,
         path: `${target.pathname}${target.search}`,
         method: payload.method,
-        headers: buildGatewayHeaders(payload.headers),
+        headers: buildGatewayHeaders(payload.headers, target),
         rejectUnauthorized: false,
       },
       (response) => {
@@ -120,10 +126,20 @@ function forwardToGateway(payload: Required<Pick<ProxyPayload, 'url' | 'method'>
             }
           }
 
+          const setCookies =
+            typeof response.getSetCookie === 'function'
+              ? response.getSetCookie()
+              : response.headers['set-cookie']
+                ? Array.isArray(response.headers['set-cookie'])
+                  ? response.headers['set-cookie']
+                  : [response.headers['set-cookie']]
+                : [];
+
           resolve({
             status: response.statusCode ?? 0,
             statusText: response.statusMessage ?? '',
             headers: responseHeaders,
+            setCookies,
             body: Buffer.concat(chunks).toString('utf8'),
           });
         });
