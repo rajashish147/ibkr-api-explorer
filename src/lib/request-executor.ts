@@ -183,6 +183,7 @@ export async function executeRequest(options: ExecuteRequestOptions): Promise<Ap
             headers,
             body,
           }),
+          credentials: 'include', // MINIMAL FIX: Ensure the browser sends the native cookie to the proxy
           signal,
         })
       : await fetch(finalUrl, fetchOptions);

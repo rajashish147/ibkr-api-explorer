@@ -199,8 +199,36 @@ export async function POST(request: Request) {
   }
 
   try {
-    const response = await forwardToGateway({ ...payload, url: target.toString(), method: payload.method });
-    return Response.json(response);
+    // Merge browser native cookies into the payload headers so the Gateway receives them
+    const browserCookieHeader = request.headers.get('cookie');
+    if (browserCookieHeader) {
+      payload.headers = payload.headers || {};
+      const existingCookies = payload.headers['Cookie'] || payload.headers['cookie'] || '';
+      // We prioritize payload cookies but append browser cookies
+      if (!existingCookies) {
+        payload.headers['Cookie'] = browserCookieHeader;
+      } else {
+        // Merge them safely (primitive merge for diagnostic success)
+        payload.headers['Cookie'] = `${existingCookies}; ${browserCookieHeader}`;
+      }
+    }
+
+    const gatewayResponse = await forwardToGateway({ ...payload, url: target.toString(), method: payload.method });
+    
+    const res = Response.json(gatewayResponse);
+
+    // The Minimal Fix: Forward the Set-Cookies to the browser natively, but strip 'Secure' 
+    // so the browser stores them over http://localhost:3000
+    if (gatewayResponse.setCookies && gatewayResponse.setCookies.length > 0) {
+      for (const cookieStr of gatewayResponse.setCookies) {
+        // Strip Secure and SameSite=None constraints so HTTP localhost accepts it
+        let rewritten = cookieStr.replace(/;\s*Secure/gi, '');
+        rewritten = rewritten.replace(/;\s*SameSite=None/gi, '; SameSite=Lax');
+        res.headers.append('Set-Cookie', rewritten);
+      }
+    }
+
+    return res;
   } catch (error) {
     return Response.json(
       {

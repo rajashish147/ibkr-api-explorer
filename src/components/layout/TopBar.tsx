@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { ConnectionWidget } from './ConnectionWidget';
 
 type ActivePanel = 'explorer' | 'runner' | 'marketdata' | 'contracts' | 'orders' | 'futures' | 'portfolio';
 
@@ -61,6 +62,9 @@ export function TopBar() {
       </div>
 
       <div className="flex-1" />
+
+      {/* Gateway Connection Status */}
+      <ConnectionWidget />
 
       {/* Active spec */}
       {activeSpec && (
