@@ -76,12 +76,23 @@ function cleanHeaders(headers: Record<string, string> | undefined): Record<strin
 
 function buildGatewayHeaders(
   headers: Record<string, string> | undefined,
-  target: URL
+  target: URL,
+  requestBody?: string
 ): Record<string, string> {
   const host = target.port ? `${target.hostname}:${target.port}` : target.hostname;
+  
+  const cleaned = cleanHeaders(headers);
+
+  // Fix 411 Length Required: Always provide a Content-Length for the Gateway to avoid chunked encoding
+  if (requestBody) {
+    cleaned['content-length'] = Buffer.byteLength(requestBody, 'utf8').toString();
+  } else {
+    // For POST/PUT with no body, force Content-Length: 0
+    cleaned['content-length'] = '0';
+  }
 
   return {
-    ...cleanHeaders(headers),
+    ...cleaned,
     Host: host,
   };
 }
@@ -105,7 +116,7 @@ function forwardToGateway(payload: Required<Pick<ProxyPayload, 'url' | 'method'>
         port: target.port,
         path: `${target.pathname}${target.search}`,
         method: payload.method,
-        headers: buildGatewayHeaders(payload.headers, target),
+        headers: buildGatewayHeaders(payload.headers, target, requestBody),
         rejectUnauthorized: false,
       },
       (response) => {

@@ -2,10 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { useEnvironmentStore } from '@/stores/useEnvironmentStore';
 
 type ConnectionState = 'connected' | 'disconnected' | 'authenticating' | 'error';
 
 export function ConnectionWidget() {
+  const getActiveVariables = useEnvironmentStore((state) => state.getActiveVariables);
   const [status, setStatus] = useState<ConnectionState>('authenticating');
 
   useEffect(() => {
@@ -13,12 +15,17 @@ export function ConnectionWidget() {
 
     const checkStatus = async () => {
       try {
+        const variables = getActiveVariables();
+        const rawBaseUrl = variables.find(v => v.key === 'baseUrl')?.value || 'https://localhost:5000/v1/api';
+        const baseUrl = rawBaseUrl.replace(/\/v1\/api\/?$/, '');
+        const targetUrl = `${baseUrl}/v1/api/iserver/auth/status`;
+
         const response = await fetch('/api/ibkr-proxy', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include', // Ensure browser sends & receives cookies
           body: JSON.stringify({
-            url: 'https://localhost:5000/v1/api/iserver/auth/status',
+            url: targetUrl,
             method: 'POST',
             headers: {},
             body: null,
