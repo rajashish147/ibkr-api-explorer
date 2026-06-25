@@ -1,9 +1,8 @@
-import https from 'node:https';
 import { Buffer } from 'node:buffer';
 import { NextRequest, NextResponse } from 'next/server';
-import { TLSSocket } from 'node:tls';
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
+import { fetch as undiciFetch, Agent } from 'undici';
 
 const execAsync = promisify(exec);
 
@@ -18,7 +17,7 @@ export async function POST(request: NextRequest) {
   let requestHeadersToForward: Record<string, string> = {};
   const originalHeaders: Record<string, string> = {};
 
-  // Extract body if provided (e.g. for Golden Request testing or POST)
+  // Extract body
   let bodyBuffer: Buffer = Buffer.alloc(0);
   try {
     const arrayBuffer = await request.arrayBuffer();
@@ -32,13 +31,6 @@ export async function POST(request: NextRequest) {
   });
 
   if (mode === 'D') {
-    // Test D: cURL Replay
-    // We will construct a curl command using the incoming headers but strictly removing
-    // typical browser headers if we want to emulate Postman perfectly. 
-    // Wait, the user said "curl command that reproduces the successful Postman request".
-    // Let's pass the 'golden' headers from the client if provided, otherwise use a minimal set.
-    
-    // We expect the client to send 'x-golden-headers' if they want a perfect replay.
     let curlHeaders = '';
     try {
       const golden = originalHeaders['x-golden-headers'];
@@ -80,7 +72,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Modes A, B, C setup
-  const hopByHop = ['connection', 'host', 'content-length', 'keep-alive', 'x-golden-headers'];
+  const hopByHop = ['connection', 'host', 'keep-alive', 'x-golden-headers', 'content-length'];
   
   if (mode === 'A') {
     // Test A: Forward everything except hop-by-hop
@@ -106,66 +98,61 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // The proxy request
-  return new Promise<NextResponse>((resolve) => {
-    const options: https.RequestOptions = {
+  // Force content-length for POST if not chunked
+  requestHeadersToForward['content-length'] = bodyBuffer.length.toString();
+
+  // The proxy request using undici
+  const dispatcher = new Agent({
+    connect: {
+      rejectUnauthorized: false
+    }
+  });
+
+  try {
+    const res = await undiciFetch(targetUrl, {
       method: 'POST',
       headers: requestHeadersToForward,
-      rejectUnauthorized: false,
-    };
+      body: bodyBuffer.length > 0 ? bodyBuffer : undefined,
+      dispatcher: dispatcher as any
+    });
 
-    let tlsInfo: any = {};
-    const req = https.request(targetUrl, options, (res) => {
-      const socket = res.socket as TLSSocket;
-      if (socket && typeof socket.getProtocol === 'function') {
-        tlsInfo = {
-          protocol: socket.getProtocol(),
-          cipher: socket.getCipher(),
-          authorized: socket.authorized,
-        };
+    const durationMs = performance.now() - startTime;
+    const responseHeaders: Record<string, string> = {};
+    res.headers.forEach((v, k) => { responseHeaders[k] = v; });
+
+    let responseBody: any = await res.text();
+    try {
+      responseBody = JSON.parse(responseBody);
+    } catch {}
+
+    return NextResponse.json({
+      mode,
+      target: { url: targetUrl, method: 'POST' },
+      timing: { durationMs },
+      request: {
+        originalBrowserHeaders: originalHeaders,
+        actualForwardedHeaders: requestHeadersToForward,
+      },
+      response: {
+        statusCode: res.status,
+        statusMessage: res.statusText,
+        headers: responseHeaders,
+        body: responseBody,
+      },
+      tls: {
+        agent: 'undici',
+        rejectUnauthorized: false
       }
-
-      const chunks: Buffer[] = [];
-      res.on('data', (d) => chunks.push(Buffer.isBuffer(d) ? d : Buffer.from(d)));
-
-      res.on('end', () => {
-        const durationMs = performance.now() - startTime;
-        let responseBody: any = Buffer.concat(chunks).toString('utf8');
-        try {
-          responseBody = JSON.parse(responseBody);
-        } catch {}
-
-        resolve(NextResponse.json({
-          mode,
-          target: { url: targetUrl, method: options.method },
-          timing: { durationMs },
-          request: {
-            originalBrowserHeaders: originalHeaders,
-            actualForwardedHeaders: requestHeadersToForward,
-          },
-          response: {
-            statusCode: res.statusCode,
-            statusMessage: res.statusMessage,
-            headers: res.headers,
-            body: responseBody,
-          },
-          tls: tlsInfo,
-        }));
-      });
     });
 
-    req.on('error', (e) => {
-      const durationMs = performance.now() - startTime;
-      resolve(NextResponse.json({
-        error: 'Request failed',
-        message: e.message,
-        target: targetUrl,
-        timing: { durationMs },
-        requestHeaders: requestHeadersToForward
-      }, { status: 502 }));
-    });
-
-    req.write(bodyBuffer);
-    req.end();
-  });
+  } catch (e: any) {
+    const durationMs = performance.now() - startTime;
+    return NextResponse.json({
+      error: 'Request failed',
+      message: e.message,
+      target: targetUrl,
+      timing: { durationMs },
+      requestHeaders: requestHeadersToForward
+    }, { status: 502 });
+  }
 }
