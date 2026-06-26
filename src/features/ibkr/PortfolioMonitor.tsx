@@ -4,20 +4,37 @@ import React from 'react';
 import { Briefcase, TrendingUp, TrendingDown, DollarSign, PieChart } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
-const DEMO_ACCOUNTS = [
-  { id: 'DU1234567', type: 'Paper', currency: 'USD', netliq: 125430.50, buyingPower: 80000, cash: 45430.50 },
-  { id: 'U9876543', type: 'Live', currency: 'USD', netliq: 52100.25, buyingPower: 30000, cash: 12100.25 },
-];
+import { useEnvironmentStore } from '@/stores/useEnvironmentStore';
 
 const DEMO_POSITIONS = [
-  { symbol: 'MNQ', description: 'Micro E-mini NASDAQ-100', position: 2, mktValue: 39685, unrealizedPnl: 1250.50, pct: 31.6 },
-  { symbol: 'MES', description: 'Micro E-mini S&P 500', position: 3, mktValue: 27106.25, unrealizedPnl: -375.25, pct: 21.6 },
-  { symbol: 'AAPL', description: 'Apple Inc.', position: 50, mktValue: 9661, unrealizedPnl: 850.00, pct: 7.7 },
+  { symbol: '{{futureSymbol}}', description: 'Micro E-mini NASDAQ-100', position: 2, mktValue: 39685, unrealizedPnl: 1250.50, pct: 31.6 },
+  { symbol: '{{etfSymbol}}', description: 'Micro E-mini S&P 500', position: 3, mktValue: 27106.25, unrealizedPnl: -375.25, pct: 21.6 },
+  { symbol: '{{stockSymbol}}', description: 'Apple Inc.', position: 50, mktValue: 9661, unrealizedPnl: 850.00, pct: 7.7 },
   { symbol: 'SPY', description: 'SPDR S&P 500 ETF', position: 10, mktValue: 5421.25, unrealizedPnl: 421.25, pct: 4.3 },
   { symbol: 'TSLA', description: 'Tesla Inc.', position: -5, mktValue: -1242.50, unrealizedPnl: -265.50, pct: -1.0 },
 ];
 
 export function PortfolioMonitor() {
+  const { getActiveVariables } = useEnvironmentStore();
+  const variables = getActiveVariables();
+  const accountId = variables.find(v => v.key === 'accountId')?.value || '{{accountId}}';
+
+  const accounts = [
+    { id: accountId, type: 'Active', currency: 'USD', netliq: 125430.50, buyingPower: 80000, cash: 45430.50 }
+  ];
+
+  const resolveSymbol = (sym: string) => {
+    return variables.find(v => v.key === sym)?.value || `{{${sym}}}`;
+  };
+
+  const positions = [
+    { symbol: resolveSymbol('futureSymbol'), description: 'Micro E-mini NASDAQ-100', position: 2, mktValue: 39685, unrealizedPnl: 1250.50, pct: 31.6 },
+    { symbol: resolveSymbol('etfSymbol'), description: 'Micro E-mini S&P 500', position: 3, mktValue: 27106.25, unrealizedPnl: -375.25, pct: 21.6 },
+    { symbol: resolveSymbol('stockSymbol'), description: 'Apple Inc.', position: 50, mktValue: 9661, unrealizedPnl: 850.00, pct: 7.7 },
+    { symbol: 'SPY', description: 'SPDR S&P 500 ETF', position: 10, mktValue: 5421.25, unrealizedPnl: 421.25, pct: 4.3 },
+    { symbol: 'TSLA', description: 'Tesla Inc.', position: -5, mktValue: -1242.50, unrealizedPnl: -265.50, pct: -1.0 },
+  ];
+
   return (
     <div className="flex flex-col h-full overflow-auto">
       {/* Header */}
@@ -30,13 +47,13 @@ export function PortfolioMonitor() {
       <div className="p-4 space-y-4">
         {/* Account cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {DEMO_ACCOUNTS.map((account) => (
+          {accounts.map((account) => (
             <div key={account.id} className="bg-[#0d0d1a] border border-[#1e1e2e] rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <p className="text-xs font-mono text-gray-400">{account.id}</p>
                   <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium mt-1 inline-block ${
-                    account.type === 'Live' ? 'border-red-500/30 text-red-400 bg-red-500/10' : 'border-amber-500/30 text-amber-400 bg-amber-500/10'
+                    account.type === 'Live' ? 'border-red-500/30 text-red-400 bg-red-500/10' : 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10'
                   }`}>
                     {account.type}
                   </span>

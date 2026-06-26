@@ -116,7 +116,7 @@ export const useEnvironmentStore = create<EnvironmentState>()(
             if (existing) {
               return {
                 ...e,
-                variables: e.variables.map((v) => (v.key === key ? { ...v, value } : v)),
+                variables: e.variables.map((v) => (v.key === key ? { ...v, value, source: 'Auto-extracted', updatedAt: Date.now() } : v)),
                 updatedAt: Date.now(),
               };
             } else {
@@ -124,7 +124,7 @@ export const useEnvironmentStore = create<EnvironmentState>()(
                 ...e,
                 variables: [
                   ...e.variables,
-                  { id: generateId(), key, value, description: 'Auto-extracted', enabled: true, sensitive: false },
+                  { id: generateId(), key, value, description: 'Auto-extracted variable', enabled: true, sensitive: false, source: 'Auto-extracted', updatedAt: Date.now() },
                 ],
                 updatedAt: Date.now(),
               };

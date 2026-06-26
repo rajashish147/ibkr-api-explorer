@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useAppStore } from '@/stores/useAppStore';
 import { useEnvironmentStore } from '@/stores/useEnvironmentStore';
 import { EnvironmentVariable } from '@/types/environment';
+import { EnvironmentInspector } from './EnvironmentInspector';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -186,27 +187,8 @@ export function EnvironmentManager() {
                 </Button>
               </div>
 
-              {/* Variables */}
-              <div className="flex-1 overflow-hidden flex flex-col gap-2">
-                <div className="grid grid-cols-[16px_1fr_1fr_16px_16px] gap-1.5 px-0">
-                  <div />
-                  <span className="text-[10px] text-gray-600 uppercase tracking-wider">Variable</span>
-                  <span className="text-[10px] text-gray-600 uppercase tracking-wider">Value</span>
-                  <span className="text-[10px] text-gray-600 uppercase tracking-wider">🔒</span>
-                  <div />
-                </div>
-                <ScrollArea className="flex-1">
-                  <div className="space-y-1.5">
-                    {selectedEnv.variables.map((variable) => (
-                      <VariableRow
-                        key={variable.id}
-                        variable={variable}
-                        onUpdate={(updates) => updateVariable(selectedEnv.id, variable.id, updates)}
-                        onRemove={() => removeVariable(selectedEnv.id, variable.id)}
-                      />
-                    ))}
-                  </div>
-                </ScrollArea>
+              <div className="flex-1 overflow-hidden flex flex-col min-h-0 border border-[#1e1e2e] rounded-lg">
+                <EnvironmentInspector envId={selectedEnv.id} />
               </div>
 
               <Button

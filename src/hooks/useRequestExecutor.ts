@@ -36,6 +36,23 @@ export function useRequestExecutor() {
 
         const response = await executeRequest(options);
 
+        // Extract variables from response
+        if (response.body) {
+          import('@/lib/response-extractor').then(({ runExtractionEngine }) => {
+            const extracted = runExtractionEngine(config.method, response.url, response.body);
+            let hasExtractions = false;
+            for (const [key, value] of Object.entries(extracted)) {
+              setVariableValue(key, value);
+              hasExtractions = true;
+            }
+            if (hasExtractions) {
+              addLog('info', `Auto-extracted variables: ${Object.keys(extracted).join(', ')}`);
+            }
+          }).catch(err => {
+            addLog('error', `Failed to run extraction engine: ${(err as Error).message}`);
+          });
+        }
+
         if (response.capturedSetCookies?.length) {
           const currentCookie = getActiveVariables().find((variable) => variable.key === 'sessionCookie')?.value;
           const mergedCookie = mergeCookieHeaders(currentCookie, response.capturedSetCookies);

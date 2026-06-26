@@ -90,6 +90,15 @@ export function useSearch() {
       const group = groups.get(key) ?? [];
       group.push(endpoint);
       groups.set(key, group);
+      
+      if (endpoint.isFavorite) {
+        const favGroup = groups.get('⭐ Favorites') ?? [];
+        // Only push if it's not already the primary category (though primary should be rarely Favorites)
+        if (key !== '⭐ Favorites') {
+          favGroup.push(endpoint);
+          groups.set('⭐ Favorites', favGroup);
+        }
+      }
     }
     return groups;
   }, [results]);

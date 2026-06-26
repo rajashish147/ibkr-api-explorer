@@ -15,6 +15,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { SchemaViewer } from '@/components/endpoint/SchemaViewer';
 import { useEndpointStore } from '@/stores/useEndpointStore';
+import { useAppStore } from '@/stores/useAppStore';
 
 export function ResponseViewer() {
   const { response, status, consoleLogs, activeTab, setActiveTab } = useResponseStore();
@@ -165,8 +166,10 @@ export function ResponseViewer() {
       {/* Response Tabs */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className="flex-1 flex flex-col overflow-hidden">
         <TabsList className="flex-shrink-0 bg-[#0d0d1a] border-b border-[#1e1e2e] rounded-none justify-start h-8 px-3 gap-0">
-          {[
-            { value: 'pretty', label: 'Pretty' },
+          <TabsTrigger value="pretty" className="text-[11px] h-7 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent data-[state=active]:text-blue-400 px-3">
+            Pretty
+          </TabsTrigger>
+          {useAppStore.getState().isDeveloperMode && [
             { value: 'raw', label: 'Raw' },
             { value: 'headers', label: `Headers (${Object.keys(response.headers).length})` },
             { value: 'schema', label: 'Schema' },

@@ -99,6 +99,21 @@ export function TopBar() {
         <span className="hidden sm:block">Import</span>
       </Button>
 
+      {/* Developer Mode */}
+      <button
+        onClick={() => useAppStore.getState().setDeveloperMode(!useAppStore.getState().isDeveloperMode)}
+        className={cn(
+          "flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-colors",
+          useAppStore.getState().isDeveloperMode 
+            ? "bg-purple-500/10 border-purple-500/30 text-purple-400"
+            : "bg-[#1a1a2e] border-[#2a2a3e] text-gray-400 hover:text-gray-200 hover:bg-[#1e1e3e]"
+        )}
+        title="Toggle Developer Mode (Raw Data)"
+      >
+        <Activity className="w-3.5 h-3.5" />
+        <span className="hidden md:block">Dev Mode</span>
+      </button>
+
       {/* Settings */}
       <button
         onClick={() => setEnvironmentOpen(true)}

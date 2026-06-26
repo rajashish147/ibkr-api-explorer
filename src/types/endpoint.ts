@@ -1,22 +1,15 @@
 import { HttpMethod, OpenApiSchema } from './openapi';
 
 export type IBKRCategory =
-  | 'Portfolio'
-  | 'Accounts'
-  | 'Orders'
-  | 'Market Data'
-  | 'Contracts'
-  | 'Trades'
-  | 'Historical Data'
-  | 'Futures'
-  | 'Financial Advisor'
-  | 'Gateway'
-  | 'Session'
-  | 'Alerts'
-  | 'Scanner'
-  | 'Performance'
-  | 'Forecasting'
-  | 'Other';
+  | '⭐ Favorites'
+  | '📊 Portfolio'
+  | '💹 Trading'
+  | '📈 Market'
+  | '📜 History'
+  | '🔍 Contracts'
+  | '🔐 Session'
+  | '⚙ Utilities'
+  | '🧪 Advanced';
 
 export interface ParsedEndpoint {
   id: string;

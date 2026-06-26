@@ -16,6 +16,8 @@ export interface EnvironmentVariable {
   description: string;
   enabled: boolean;
   sensitive: boolean;
+  source?: string;
+  updatedAt?: number;
 }
 
 export type EnvironmentType = 'development' | 'paper' | 'live' | 'custom';

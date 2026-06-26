@@ -126,10 +126,28 @@ export const EndpointTree = React.memo(function EndpointTree() {
     setRequestFromEndpoint(endpoint, baseUrl);
   }, [baseUrl, setRequestFromEndpoint]);
 
-  const categories = useMemo(
-    () => Array.from(groupedResults.entries()).sort(([a], [b]) => a.localeCompare(b)),
-    [groupedResults]
-  );
+  const categories = useMemo(() => {
+    const CATEGORY_ORDER = [
+      '⭐ Favorites',
+      '📊 Portfolio',
+      '💹 Trading',
+      '📈 Market',
+      '📜 History',
+      '🔍 Contracts',
+      '🔐 Session',
+      '⚙ Utilities',
+      '🧪 Advanced'
+    ];
+    return Array.from(groupedResults.entries()).sort(([a], [b]) => {
+      const indexA = CATEGORY_ORDER.indexOf(a);
+      const indexB = CATEGORY_ORDER.indexOf(b);
+      // If a category isn't in the list, it goes to the bottom
+      if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
+  }, [groupedResults]);
 
   const flatRows = useMemo(() => {
     const rows: VirtualRowData[] = [];

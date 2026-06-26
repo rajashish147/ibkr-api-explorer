@@ -4,6 +4,7 @@ import React from 'react';
 import { useEndpointStore } from '@/stores/useEndpointStore';
 import { useResponseStore } from '@/stores/useResponseStore';
 import { useRequestExecutor } from '@/hooks/useRequestExecutor';
+import { useEnvironmentStore } from '@/stores/useEnvironmentStore';
 import { useCollectionStore } from '@/stores/useCollectionStore';
 import { ParsedEndpoint } from '@/types/endpoint';
 import { ParamEditor } from './ParamEditor';
@@ -32,6 +33,8 @@ export function RequestBuilder({ endpoint }: RequestBuilderProps) {
 
   const isLoading = status === 'loading';
 
+  const { getActiveVariables } = useEnvironmentStore();
+
   const handleSend = async () => {
     if (isLoading) {
       abort();
@@ -41,6 +44,42 @@ export function RequestBuilder({ endpoint }: RequestBuilderProps) {
       toast.error('Please enter a URL');
       return;
     }
+
+    // Check for unresolved variables
+    const variables = getActiveVariables();
+    const activeVars = new Set(variables.filter(v => v.enabled && v.value.trim() !== '').map(v => v.key));
+    
+    // Find missing variables in the request URL, headers, and params
+    const VARIABLE_PATTERN = /\{\{([^}]+)\}\}/g;
+    const missingVars = new Set<string>();
+    
+    const checkString = (str: string) => {
+      const matches = str.matchAll(VARIABLE_PATTERN);
+      for (const match of matches) {
+        const key = match[1].trim();
+        if (!activeVars.has(key)) missingVars.add(key);
+      }
+    };
+    
+    checkString(currentRequest.url);
+    currentRequest.pathParams.filter(p => p.enabled).forEach(p => checkString(p.value));
+    currentRequest.queryParams.filter(p => p.enabled).forEach(p => checkString(p.value));
+    currentRequest.headers.filter(p => p.enabled).forEach(p => { checkString(p.name); checkString(p.value); });
+    if (currentRequest.body) checkString(currentRequest.body);
+
+    if (missingVars.size > 0) {
+      const missing = Array.from(missingVars).join(', ');
+      toast.error(
+        <div className="flex flex-col gap-1">
+          <span className="font-bold">Missing Environment Variables</span>
+          <span className="text-xs text-gray-200">The following variables are unresolved: {missing}</span>
+          <span className="text-[10px] text-gray-400 mt-1">Please set them in the Environment Manager or run an endpoint that auto-extracts them.</span>
+        </div>,
+        { duration: 5000 }
+      );
+      return;
+    }
+
     await execute();
   };
 

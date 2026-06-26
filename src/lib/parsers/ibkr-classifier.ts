@@ -7,46 +7,49 @@ interface PathClassification {
 }
 
 const IBKR_PATH_RULES: PathClassification[] = [
-  { patterns: [/^\/portfolio\/accounts/, /^\/iserver\/dynaccount/, /^\/acesws/], category: 'Accounts', priority: 10 },
-  { patterns: [/^\/portfolio/], category: 'Portfolio', priority: 8 },
-  { patterns: [/^\/iserver\/account/], category: 'Orders', priority: 8 },
-  { patterns: [/^\/iserver\/marketdata/, /^\/iserver\/currency/, /^\/iserver\/exchangerate/, /^\/iserver\/watchlist/], category: 'Market Data', priority: 10 },
-  { patterns: [/^\/iserver\/secdef/, /^\/iserver\/contract/], category: 'Contracts', priority: 10 },
-  { patterns: [/^\/trsrv/], category: 'Futures', priority: 10 },
-  { patterns: [/^\/orders/, /^\/iserver\/reply/], category: 'Orders', priority: 10 },
-  { patterns: [/^\/trades/], category: 'Trades', priority: 10 },
-  { patterns: [/^\/fa/], category: 'Financial Advisor', priority: 10 },
-  { patterns: [/^\/gw/, /^\/ws/], category: 'Gateway', priority: 10 },
-  { patterns: [/^\/fyi/, /^\/iserver\/notification/, /^\/iserver\/alert/], category: 'Alerts', priority: 10 },
-  { patterns: [/^\/iserver\/scanner/], category: 'Scanner', priority: 10 },
-  { patterns: [/^\/pa/], category: 'Performance', priority: 10 },
-  { patterns: [/^\/forecast/], category: 'Forecasting', priority: 10 },
-  { patterns: [/^\/logout/, /^\/sso/, /^\/tickle/, /^\/oauth/, /^\/iserver\/auth/, /^\/iserver\/questions/], category: 'Session', priority: 10 },
-  { patterns: [/^\/contract/], category: 'Contracts', priority: 5 },
-  { patterns: [/^\/portfolio2/], category: 'Portfolio', priority: 5 },
+  { patterns: [/^\/portfolio\/accounts/, /^\/iserver\/dynaccount/, /^\/acesws/], category: '📊 Portfolio', priority: 10 },
+  { patterns: [/^\/portfolio/], category: '📊 Portfolio', priority: 8 },
+  { patterns: [/^\/iserver\/account/], category: '💹 Trading', priority: 8 },
+  { patterns: [/^\/iserver\/marketdata/, /^\/iserver\/currency/, /^\/iserver\/exchangerate/, /^\/iserver\/watchlist/], category: '📈 Market', priority: 10 },
+  { patterns: [/^\/iserver\/secdef/, /^\/iserver\/contract/], category: '🔍 Contracts', priority: 10 },
+  { patterns: [/^\/trsrv/], category: '🔍 Contracts', priority: 10 },
+  { patterns: [/^\/orders/, /^\/iserver\/reply/], category: '💹 Trading', priority: 10 },
+  { patterns: [/^\/trades/], category: '💹 Trading', priority: 10 },
+  { patterns: [/^\/fa/, /^\/ibcust/, /^\/ccp/], category: '🧪 Advanced', priority: 10 },
+  { patterns: [/^\/gw/, /^\/ws/, /^\/admin/, /^\/metrics/], category: '⚙ Utilities', priority: 10 },
+  { patterns: [/^\/fyi/, /^\/iserver\/notification/, /^\/iserver\/alert/], category: '⚙ Utilities', priority: 10 },
+  { patterns: [/^\/iserver\/scanner/], category: '📈 Market', priority: 10 },
+  { patterns: [/^\/pa/], category: '🧪 Advanced', priority: 10 },
+  { patterns: [/^\/forecast/], category: '🧪 Advanced', priority: 10 },
+  { patterns: [/^\/logout/, /^\/sso/, /^\/tickle/, /^\/oauth/, /^\/iserver\/auth/, /^\/iserver\/questions/], category: '🔐 Session', priority: 10 },
+  { patterns: [/^\/contract/], category: '🔍 Contracts', priority: 5 },
+  { patterns: [/^\/portfolio2/], category: '📊 Portfolio', priority: 5 },
 ];
 
 const TAG_TO_CATEGORY: Record<string, IBKRCategory> = {
-  portfolio: 'Portfolio',
-  account: 'Accounts',
-  accounts: 'Accounts',
-  orders: 'Orders',
-  order: 'Orders',
-  'market data': 'Market Data',
-  marketdata: 'Market Data',
-  contracts: 'Contracts',
-  contract: 'Contracts',
-  trades: 'Trades',
-  fa: 'Financial Advisor',
-  gateway: 'Gateway',
-  session: 'Session',
-  alerts: 'Alerts',
-  scanner: 'Scanner',
-  performance: 'Performance',
-  forecast: 'Forecasting',
+  portfolio: '📊 Portfolio',
+  account: '📊 Portfolio',
+  accounts: '📊 Portfolio',
+  orders: '💹 Trading',
+  order: '💹 Trading',
+  'market data': '📈 Market',
+  marketdata: '📈 Market',
+  contracts: '🔍 Contracts',
+  contract: '🔍 Contracts',
+  trades: '💹 Trading',
+  fa: '🧪 Advanced',
+  gateway: '⚙ Utilities',
+  session: '🔐 Session',
+  alerts: '⚙ Utilities',
+  scanner: '📈 Market',
+  performance: '🧪 Advanced',
+  forecast: '🧪 Advanced',
+  history: '📜 History',
 };
 
-export function classifyEndpoint(path: string, tags: string[] = []): IBKRCategory {
+export function classifyEndpoint(path: string, tags: string[] = [], deprecated = false): IBKRCategory {
+  if (deprecated) return '🧪 Advanced';
+
   // 1. Try path matching first (more reliable for IBKR)
   for (const rule of IBKR_PATH_RULES.sort((a, b) => b.priority - a.priority)) {
     if (rule.patterns.some((p) => p.test(path))) {
@@ -66,12 +69,13 @@ export function classifyEndpoint(path: string, tags: string[] = []): IBKRCategor
 
   // 3. Heuristic fallback based on path keywords
   const lower = path.toLowerCase();
-  if (lower.includes('history') || lower.includes('hmds')) return 'Historical Data';
-  if (lower.includes('scanner')) return 'Scanner';
-  if (lower.includes('alert') || lower.includes('notification')) return 'Alerts';
-  if (lower.includes('auth') || lower.includes('session') || lower.includes('login')) return 'Session';
+  if (lower.includes('history') || lower.includes('hmds')) return '📜 History';
+  if (lower.includes('scanner')) return '📈 Market';
+  if (lower.includes('alert') || lower.includes('notification')) return '⚙ Utilities';
+  if (lower.includes('auth') || lower.includes('session') || lower.includes('login') || lower.includes('oauth')) return '🔐 Session';
+  if (lower.includes('funding') || lower.includes('tax') || lower.includes('advisor') || lower.includes('institutional')) return '🧪 Advanced';
 
-  return 'Other';
+  return '🧪 Advanced';
 }
 
 export function isIBKRSpec(paths: string[]): boolean {
@@ -95,39 +99,25 @@ export function groupByCategory<T extends { ibkrCategory: IBKRCategory }>(
 }
 
 export const CATEGORY_ICONS: Record<IBKRCategory, string> = {
-  Portfolio: 'Briefcase',
-  Accounts: 'User',
-  Orders: 'ShoppingCart',
-  'Market Data': 'TrendingUp',
-  Contracts: 'FileText',
-  Trades: 'ArrowLeftRight',
-  'Historical Data': 'BarChart2',
-  Futures: 'Zap',
-  'Financial Advisor': 'Users',
-  Gateway: 'Server',
-  Session: 'Lock',
-  Scanner: 'Search',
-  Alerts: 'Bell',
-  Performance: 'Activity',
-  Forecasting: 'LineChart',
-  Other: 'Circle',
+  '⭐ Favorites': 'Star',
+  '📊 Portfolio': 'Briefcase',
+  '💹 Trading': 'ShoppingCart',
+  '📈 Market': 'TrendingUp',
+  '📜 History': 'BarChart2',
+  '🔍 Contracts': 'FileText',
+  '🔐 Session': 'Lock',
+  '⚙ Utilities': 'Settings',
+  '🧪 Advanced': 'FlaskConical',
 };
 
 export const CATEGORY_COLORS: Record<IBKRCategory, string> = {
-  Portfolio: '#22c55e',
-  Accounts: '#3b82f6',
-  Orders: '#f59e0b',
-  'Market Data': '#06b6d4',
-  Contracts: '#8b5cf6',
-  Trades: '#ec4899',
-  'Historical Data': '#f97316',
-  Futures: '#84cc16',
-  'Financial Advisor': '#0ea5e9',
-  Gateway: '#64748b',
-  Session: '#6b7280',
-  Scanner: '#a78bfa',
-  Alerts: '#fb923c',
-  Performance: '#10b981',
-  Forecasting: '#f43f5e',
-  Other: '#9ca3af',
+  '⭐ Favorites': '#eab308',
+  '📊 Portfolio': '#22c55e',
+  '💹 Trading': '#3b82f6',
+  '📈 Market': '#06b6d4',
+  '📜 History': '#f97316',
+  '🔍 Contracts': '#8b5cf6',
+  '🔐 Session': '#6b7280',
+  '⚙ Utilities': '#64748b',
+  '🧪 Advanced': '#ec4899',
 };

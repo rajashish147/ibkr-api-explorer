@@ -50,12 +50,41 @@ export const useEndpointStore = create<EndpointState>()(
       favoriteIds: new Set<string>(),
       currentRequest: DEFAULT_REQUEST,
 
-      setEndpoints: (endpoints) =>
+      setEndpoints: (endpoints) => {
+        const { favoriteIds } = get();
+        let updatedFavorites = new Set(favoriteIds);
+        
+        // Auto-favorite daily APIs if first time (empty favorites)
+        if (favoriteIds.size === 0) {
+          const defaultFavorites = [
+            '/sso/validate', '/tickle', '/portfolio/accounts',
+            '/portfolio/{accountId}/summary', '/portfolio/{accountId}/ledger',
+            '/portfolio/{accountId}/positions', '/iserver/account/{accountId}/orders',
+            '/iserver/account/orders', '/iserver/account/{accountId}/order/{orderId}',
+            '/iserver/account/trades', '/iserver/marketdata/snapshot',
+            '/iserver/marketdata/history', '/iserver/secdef/search'
+          ];
+          
+          endpoints.forEach(ep => {
+            if (defaultFavorites.includes(ep.path)) {
+              updatedFavorites.add(ep.id);
+            }
+          });
+        }
+        
+        // Ensure endpoints have the correct isFavorite flag
+        const mappedEndpoints = endpoints.map(ep => ({
+          ...ep,
+          isFavorite: updatedFavorites.has(ep.id)
+        }));
+
         set({
-          endpoints,
+          endpoints: mappedEndpoints,
           selectedEndpointId: null,
-          expandedTags: new Set(endpoints.flatMap((e) => e.tags)),
-        }),
+          expandedTags: new Set(mappedEndpoints.flatMap((e) => e.tags).concat(['⭐ Favorites'])),
+          favoriteIds: updatedFavorites
+        });
+      },
 
       addEndpoints: (endpoints) =>
         set((state) => ({

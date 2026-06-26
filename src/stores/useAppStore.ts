@@ -23,6 +23,7 @@ interface AppState {
   setEnvironmentOpen: (open: boolean) => void;
   setCollectionManagerOpen: (open: boolean) => void;
   setRunnerOpen: (open: boolean) => void;
+  setDeveloperMode: (enabled: boolean) => void;
   setTheme: (theme: 'dark' | 'light') => void;
 }
 
@@ -37,6 +38,7 @@ export const useAppStore = create<AppState>()(
       isEnvironmentOpen: false,
       isCollectionManagerOpen: false,
       isRunnerOpen: false,
+      isDeveloperMode: false,
       theme: 'dark',
 
       setSidebarTab: (tab) => set({ sidebarTab: tab }),
@@ -47,6 +49,7 @@ export const useAppStore = create<AppState>()(
       setEnvironmentOpen: (open) => set({ isEnvironmentOpen: open }),
       setCollectionManagerOpen: (open) => set({ isCollectionManagerOpen: open }),
       setRunnerOpen: (open) => set({ isRunnerOpen: open }),
+      setDeveloperMode: (enabled) => set({ isDeveloperMode: enabled }),
       setTheme: (theme) => set({ theme }),
     }),
     { name: 'ibkr-app-store' }
